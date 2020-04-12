@@ -1,0 +1,16 @@
+#!/bin/sh
+
+#
+# sync-photos
+#
+# Syncs the photos directory from the local disk to the remote,
+# deleting files from the remote if required.
+#
+
+if [[ -d "${1}" ]]; then
+  rclone -P sync --transfers=8 "${1}" "scaleway:dfb00468ebab1218f4b7951981eb4a7090541c7a/Debajit/Pictures/Photography/${1}"
+else
+  echo "Photos directory '${1}' does not exist"
+  exit 1
+fi
+

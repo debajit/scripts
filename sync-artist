@@ -1,0 +1,17 @@
+#!/bin/sh
+
+#
+# sync-artist
+#
+# Syncs the artist directory from the local disk to the remote,
+# deleting files from the remote if required.
+#
+
+if [[ -d "${1}" ]]; then
+  rclone -P sync "${1}" "box:Debajit/Music/${1}"
+  rclone -P sync "${1}" "mega:Debajit/Music/${1}"
+else
+  echo "Artist directory '${1}' does not exist"
+  exit 1
+fi
+
