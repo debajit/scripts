@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+#
+# backup-playlist
+#
+# Converts a CMUS playlist to m3u, replaces all absolute paths with
+# relative ones, and uploads it to Box and Mega.
+#
+# If you store this generated m3u playlist at the root of your music
+# collection in Box or another cloud storage, then you can directly
+# import this m3u playlist to quickly load all its songs, on your
+# phone, for instance, using something like CloudBeats.
+#
+
+SOURCE_PLAYLIST_DIRECTORY="${HOME}/.config/cmus/playlists"
+TARGET_PLAYLIST_DIRECTORY="${HOME}/MusicOnExternalDrive"
+
+SOURCE_PLAYLIST_NAME="$1"
+TARGET_PLAYLIST_NAME="${SOURCE_PLAYLIST_NAME}.m3u"
+SOURCE_PLAYLIST_FILENAME="${SOURCE_PLAYLIST_DIRECTORY}/${SOURCE_PLAYLIST_NAME}"
+TARGET_PLAYLIST_FILENAME="${TARGET_PLAYLIST_DIRECTORY}/${TARGET_PLAYLIST_NAME}"
+
+if [[ ! -r "${SOURCE_PLAYLIST_FILENAME}" ]]; then
+  echo "CMUS playlist ${SOURCE_PLAYLIST_FILENAME} does not exist"
+  exit 1
+fi
+
+sed 's|/home/debajit/MusicOnExternalDrive|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
+ls -ld "${TARGET_PLAYLIST_FILENAME}"
+
+rclone -P copy "${TARGET_PLAYLIST_FILENAME}" box:Debajit/Music/
+rclone -P copy "${TARGET_PLAYLIST_FILENAME}" mega:Debajit/Music/
