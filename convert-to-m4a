@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+#
+# convert-to-m4a
+#
+# USAGE:
+#   convert-to-m4a FILE_TO_CONVERT
+#   convert-to-m4a song.opus
+#
+# DESCRIPTION:
+#   Converts the given file to M4A (AAC) using the Fraunhofer
+#   libfdk-aac library (via fdkaac). See
+#   https://trac.ffmpeg.org/wiki/Encode/AAC
+#
+
+# TODO: Add volume adjustment. See
+# https://www.maketecheasier.com/normalize-music-files-with-ffmpeg/
+
+M4A_FILE_EXTENSION="m4a"
+
+input_file="$1"
+
+if [[ ! -r "${input_file}" ]]; then
+  echo "Input file '${input_file}' could not be found"
+  exit 1
+fi
+
+# The %% removes the largest string segment towards the end that
+# matches the pattern ".*" i.e it removes the file extension. See
+# https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html#Shell-Parameter-Expansion
+output_file="${input_file%%.*}.${M4A_FILE_EXTENSION}"
+
+ffmpeg -i "${input_file}" -f caf - | fdkaac -m5 - -o "${output_file}"
