@@ -25,8 +25,18 @@ if [[ ! -r "${SOURCE_PLAYLIST_FILENAME}" ]]; then
   exit 1
 fi
 
-sed 's|/home/debajit/MusicOnExternalDrive|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
+echo 'Replacing absolute links with relative ones...'
+sed 's|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
 ls -ld "${TARGET_PLAYLIST_FILENAME}"
 
+if [[ $? -eq 0 ]]; then
+  echo "Successfully wrote new playlist ${TARGET_PLAYLIST_FILENAME}"
+else
+  echo "Failed to write new playlist ${TARGET_PLAYLIST_FILENAME}"
+fi
+
+echo 'Uploading to Box...'
 rclone -P copy "${TARGET_PLAYLIST_FILENAME}" box:Debajit/Music/
+
+echo 'Uploading to Mega...'
 rclone -P copy "${TARGET_PLAYLIST_FILENAME}" mega:Debajit/Music/
