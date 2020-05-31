@@ -4,14 +4,14 @@
 # backup-artist - Back up the given music artist directory to the cloud
 #
 # SYNOPSIS
-#   backup-artist ARTIST-NAME
+#   backup-artist ARTIST-DIRECTORY
 #
 # DESCRIPTION
 #   Copies the files in the given music artist directory to the Box and
 #   Mega clouds using rclone. An incremental copy is done, so only
 #   changed files are updated.
 #
-# USAGE
+# EXAMPLES
 #   backup-artist aliceeffekt
 #   backup-artist "Cradle of Filth"
 #
