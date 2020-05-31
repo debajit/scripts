@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 
 #
-# backup-playlist
+# backup-playlist - backup a CMUS playlist to the cloud
 #
-# Converts a CMUS playlist to m3u, replaces all absolute paths with
-# relative ones, and uploads it to Box and Mega.
+# SYNOPSIS
+#   backup-playlist CMUS-PLAYLIST_NAME
 #
-# If you store this generated m3u playlist at the root of your music
-# collection in Box or another cloud storage, then you can directly
-# import this m3u playlist to quickly load all its songs, on your
-# phone, for instance, using something like CloudBeats.
+# DESCRIPTION
+#   Converts a CMUS playlist to m3u, replaces all absolute paths with
+#   relative ones, and uploads it to Box and Mega.
+#
+#   If you store this generated m3u playlist at the root of your music
+#   collection in Box or another cloud storage, then you can directly
+#   import this m3u playlist to quickly load all its songs, on your
+#   phone, for instance, using something like CloudBeats.
+#
+#   The script Can be run from any directory.
+#
+# EXAMPLES
+#   backup-playlist Octane
+#   backup-playlist Mellow
 #
 
+REMOTES=(box mega)
 SOURCE_PLAYLIST_DIRECTORY="${HOME}/.config/cmus/playlists"
 TARGET_PLAYLIST_DIRECTORY="${HOME}/MusicOnExternalDrive"
 
@@ -20,23 +31,32 @@ TARGET_PLAYLIST_NAME="${SOURCE_PLAYLIST_NAME}.m3u"
 SOURCE_PLAYLIST_FILENAME="${SOURCE_PLAYLIST_DIRECTORY}/${SOURCE_PLAYLIST_NAME}"
 TARGET_PLAYLIST_FILENAME="${TARGET_PLAYLIST_DIRECTORY}/${TARGET_PLAYLIST_NAME}"
 
+# See also https://unix.stackexchange.com/a/438357/141850
+function echo_notify {
+  echo -e "$(tput bold)$(tput setaf 154)➥ $(tput setaf 49)${1}$(tput sgr0)"
+}
+
+function echo_error {
+  echo -e "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
+       "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
+}
+
 if [[ ! -r "${SOURCE_PLAYLIST_FILENAME}" ]]; then
-  echo "CMUS playlist ${SOURCE_PLAYLIST_FILENAME} does not exist"
+  echo_error "CMUS playlist “${SOURCE_PLAYLIST_FILENAME}” does not exist"
   exit 1
 fi
 
-echo 'Replacing absolute links with relative ones...'
+echo_notify 'Replacing absolute links with relative ones...'
 sed 's|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
-ls -ld "${TARGET_PLAYLIST_FILENAME}"
+# ls -ld "${TARGET_PLAYLIST_FILENAME}"
 
 if [[ $? -eq 0 ]]; then
-  echo "Successfully wrote new playlist ${TARGET_PLAYLIST_FILENAME}"
+  echo_notify "Successfully wrote playlist “${TARGET_PLAYLIST_FILENAME}”"
 else
-  echo "Failed to write new playlist ${TARGET_PLAYLIST_FILENAME}"
+  echo_error "Failed to write playlist ${TARGET_PLAYLIST_FILENAME}"
 fi
 
-echo 'Uploading to Box...'
-rclone -P copy "${TARGET_PLAYLIST_FILENAME}" box:Debajit/Music/
-
-echo 'Uploading to Mega...'
-rclone -P copy "${TARGET_PLAYLIST_FILENAME}" mega:Debajit/Music/
+for remote in ${REMOTES[*]}; do
+  echo_notify "Backing up to ${remote}..."
+  rclone -P copy "${TARGET_PLAYLIST_FILENAME}" "${remote}:Debajit/Music/"
+done
