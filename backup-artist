@@ -1,10 +1,44 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-if [[ -d "${1}" ]]; then
-  rclone -P copy "${1}" "box:Debajit/Music/${1}"
-  rclone -P copy "${1}" "mega:Debajit/Music/${1}"
-else
-  echo "Artist directory '${1}' does not exist"
+#
+# backup-artist - Back up the given music artist directory to the cloud
+#
+# SYNOPSIS
+#   backup-artist ARTIST-NAME
+#
+# DESCRIPTION
+#   Copies the files in the given music artist directory to the Box and
+#   Mega clouds using rclone. An incremental copy is done, so only
+#   changed files are updated.
+#
+# USAGE
+#   backup-artist aliceeffekt
+#   backup-artist "Cradle of Filth"
+#
+
+REMOTES=(box mega)
+
+artist_dir="${1}"
+
+# See also https://unix.stackexchange.com/a/438357/141850
+function echo_notify {
+  echo -e "\n$(tput bold)$(tput setaf 48)➥ ${1}$(tput sgr0)"
+}
+
+function echo_error {
+  echo -e "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
+       "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
+}
+
+if [[ ! -d "${artist_dir}" ]]
+then
+  echo_error "Artist directory '${artist_dir}' does not exist"
   exit 1
 fi
 
+
+for remote in ${REMOTES[*]}
+do
+  echo_notify "Backing up to ${remote}..."
+  rclone -P copy "${1}" "${remote}:Debajit/Music/${artist_dir}"
+done
