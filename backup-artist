@@ -36,7 +36,6 @@ then
   exit 1
 fi
 
-
 for remote in ${REMOTES[*]}
 do
   echo_notify "Backing up to ${remote}..."
