@@ -39,5 +39,5 @@ fi
 for remote in ${REMOTES[*]}
 do
   echo_notify "Backing up to ${remote}..."
-  rclone -P copy "${1}" "${remote}:Debajit/Music/${artist_dir}"
+  rclone -P copy "${artist_dir}" "${remote}:Debajit/Music/${artist_dir}"
 done
