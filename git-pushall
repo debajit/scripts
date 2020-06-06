@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if [[ -n $(git status -s) ]]; then
+  echo "Pushing..."
+
+  git add . && \
+    git commit -m "Automatically synced using git-pushall" && \
+    git push
+
+  if [[ $? -eq 0 ]]; then
+    echo "Successfully synced"
+  else
+    echo "Failed to sync"
+  fi
+fi
+
+
