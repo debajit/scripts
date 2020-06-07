@@ -1,21 +1,38 @@
 #!/usr/bin/env bash
 
+#
+# git-pushall - Push all the uncommitted changes in the current git repo
+#
+# SYNOPSIS
+#   git-pushall
+#
+# DESCRIPTION
+#   Takes all the local uncommitted changes, adds them to a commit and
+#   pushes them to the default git remote. The script needs to be run
+#   from a git repo.
+#
+
 source "notification.sh"
 
-if [[ -n $(git status -s) ]]; then
-  echo_notify "Pushing..."
+# Check if there is anything to push
+if [[ -z $(git status -s) ]]; then
+  # Nothing to sync
+  exit 0
+fi
 
-  git add . && \
-    git commit -m "Automatically synced using git-pushall" && \
-    git push
+# The are local changes
+echo_notify "Pushing..."
 
-  if [[ $? -eq 0 ]]; then
-    echo_notify "Successfully synced"
-    # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
-    # TODO: Extract from param
-    notify-send 'Wiki Watcher' 'Uploaded changes'
-  else
-    echo_error "Failed to sync"
-    notify-send 'Wiki Watcher' 'Failed to sync' --icon=dialog-error
-  fi
+git add . && \
+  git commit -m "Automatically synced using git-pushall" && \
+  git push
+
+if [[ $? -eq 0 ]]; then
+  echo_notify "Successfully synced"
+  # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
+  # TODO: Extract from param
+  notify-send 'Wiki Watcher' 'Uploaded changes'
+else
+  echo_error "Failed to sync"
+  notify-send 'Wiki Watcher' 'Failed to sync' --icon=dialog-error
 fi
