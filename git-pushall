@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 
+source "notification.sh"
+
 if [[ -n $(git status -s) ]]; then
-  echo "Pushing..."
+  echo_notify "Pushing..."
 
   git add . && \
     git commit -m "Automatically synced using git-pushall" && \
     git push
 
   if [[ $? -eq 0 ]]; then
-    echo "Successfully synced"
+    echo_notify "Successfully synced"
     # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
     # TODO: Extract from param
     notify-send 'Wiki Watcher' 'Uploaded changes'
   else
-    echo "Failed to sync"
+    echo_error "Failed to sync"
     notify-send 'Wiki Watcher' 'Failed to sync' --icon=dialog-error
   fi
 fi
