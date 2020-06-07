@@ -9,10 +9,11 @@ if [[ -n $(git status -s) ]]; then
 
   if [[ $? -eq 0 ]]; then
     echo "Successfully synced"
-    osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
+    # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
+    # TODO: Extract from param
+    notify-send 'Wiki Watcher' 'Uploaded changes'
   else
     echo "Failed to sync"
+    notify-send 'Wiki Watcher' 'Failed to sync' --icon=dialog-error
   fi
 fi
-
-

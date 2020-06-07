@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+watchexec -d 3000 -i '$__StoryList.tid' -- git-pushall
