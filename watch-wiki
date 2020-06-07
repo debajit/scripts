@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 source "notification.sh"
-WIKI_ROOT="${HOME}/Documents/wiki"
 
-echo_notify "Watching wiki at '${WIKI_ROOT}'. Changes will be uploaded upstream automatically."
-
-watchexec -p -w "${WIKI_ROOT}" -d 3000 -i '$__StoryList.tid' -- git-pushall
+echo_notify "Watching wiki in current directory. Changes will be uploaded upstream automatically."
+watchexec -p -d 3000 -i '$__StoryList.tid' -- git-pushall
