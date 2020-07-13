@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-source "start-wiki.sh"
+source "wiki.sh"
 
-TIDDLYWIKI_ROOT="${HOME}/Documents/wiki"
-PORT=${1:-4444}
-
-start_wiki "${TIDDLYWIKI_ROOT}" "${PORT}"
+start_wiki "${PERSONAL_WIKI_ROOT}" "${PERSONAL_WIKI_PORT}"

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+source "wiki.sh"
+
+start_wiki "${WORK_WIKI_ROOT}" "${WORK_WIKI_PORT}"

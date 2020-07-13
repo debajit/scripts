@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+source "wiki.sh"
+
+watch_wiki "${PERSONAL_WIKI_ROOT}"
