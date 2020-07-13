@@ -24,7 +24,7 @@ install: $(TARGET_FILES)
 
 # See Static Pattern Rules in
 # https://www.gnu.org/software/make/manual/make.html#Rule-Example
-$(TARGET_FILES): $(INSTALL_DIR)/%: ./%
+$(TARGET_FILES): $(INSTALL_DIR)/%: %
 	cp $< $@
 
 .PHONY: uninstall
