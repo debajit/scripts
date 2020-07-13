@@ -29,10 +29,9 @@ git add . && \
 
 if [[ $? -eq 0 ]]; then
   echo_notify "Successfully synced"
-  # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
-  # TODO: Extract from param
-  notify-send 'Wiki Watcher' 'Uploaded changes'
+  send_notification 'Wiki Watcher' 'Uploaded changes'
 else
   echo_error "Failed to sync"
+  # TODO: Refactor into notification.sh
   notify-send 'Wiki Watcher' 'Failed to sync' --icon=dialog-error
 fi
