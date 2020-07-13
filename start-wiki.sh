@@ -18,8 +18,11 @@
 
 source "notification.sh"
 
-TIDDLYWIKI_ROOT="${HOME}/Documents/wiki"
-PORT=${1:-4444}
+function start_wiki {
+  wiki_dir="${1}"
+  port=${2:-4444}
 
-echo_notify "Starting TiddlyWiki server on port ${PORT}..."
-tiddlywiki "${TIDDLYWIKI_ROOT}" --server "${PORT}"
+  echo_notify "Starting TiddlyWiki server on port ${PORT} from '${wiki_dir}'..."
+  send_notification "TiddlyWiki" "Serving '${wiki_dir}' on port ${port}"
+  tiddlywiki "${wiki_dir}" --server "${port}"
+}
