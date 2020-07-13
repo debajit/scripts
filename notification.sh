@@ -20,7 +20,7 @@ function send_notification {
 
     Darwin)
       # macOS
-      osascript -e "display notification '${message}' with title '${title}' sound name 'Submarine'"
+      osascript -e "display notification \"${message}\" with title \"${title}\" sound name \"Submarine\""
       ;;
 
     CYGWIN*|MINGW32*|MSYS*|MINGW*)
