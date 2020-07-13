@@ -16,20 +16,20 @@ function send_notification {
     Linux)
       # Linux
       notify-send "${title}" "${message}"
-     ;;
+      ;;
 
     Darwin)
-     # macOS
-     osascript -e "display notification '${message}' with title '${title}' sound name 'Submarine'"
-     ;;
+      # macOS
+      osascript -e "display notification '${message}' with title '${title}' sound name 'Submarine'"
+      ;;
 
-   CYGWIN*|MINGW32*|MSYS*|MINGW*)
-     # Windows
-     # TODO
-     ;;
+    CYGWIN*|MINGW32*|MSYS*|MINGW*)
+      # Windows
+      # TODO
+      ;;
 
-   *)
-     # Other OS
-     ;;
+    *)
+      # Other OS
+      ;;
   esac
 }
