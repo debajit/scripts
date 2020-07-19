@@ -22,11 +22,20 @@ TARGET_FILES = $(addprefix $(INSTALL_DIR)/, $(SOURCE_FILES))
 .PHONY: install
 install: $(TARGET_FILES)
 
-# See Static Pattern Rules in
+# See
+#
+# Static Pattern Rules
 # https://www.gnu.org/software/make/manual/make.html#Rule-Example
-$(TARGET_FILES): $(INSTALL_DIR)/%: %
+#
+# Order-only prerequisites:
+# https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
+#
+$(TARGET_FILES): $(INSTALL_DIR)/%: % | $(INSTALL_DIR)
 	cp $< $@
+
+$(INSTALL_DIR):
+	mkdir -p $(INSTALL_DIR)
 
 .PHONY: uninstall
 uninstall:
-	rm $(TARGET_FILES)
+	rm -f $(TARGET_FILES)
