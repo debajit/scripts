@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+#
+# archive - Archive a directory or file
+#
+# SYNOPSIS
+#   archive DIR_OR_FILE_NAME
+#
+# DESCRIPTION
+#
+#   Takes the given file or directory and generates a .tar.xz
+#   file with a timestamp. The original file is not touched.
+#
+# EXAMPLES
+#   archive wiki
+#   => wiki--2020-07-13--12-34.tar.gz
+#
+
+source "notification.sh"
+
+source_file="${1}"
+suffix="$(date "+--%Y-%m-%d--%H-%M")"
+target_file="${source_file}${suffix}.tar.xz"
+
+if [[ ! -e "${source_file}" ]]; then
+  echo_error "Could not find file or directory '${source_file}'"
+  exit 1
+fi
+
+source_file_type="$(file --brief -- "${source_file}")"
+echo_notify "Archiving $source_file_type '$source_file' into '${target_file}'"
+apack -v "${target_file}" "${source_file}"
