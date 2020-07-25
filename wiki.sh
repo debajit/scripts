@@ -48,3 +48,16 @@ function watch_wiki {
   send_notification "Wiki Watcher" "Watching TiddlyWiki at '${wiki_dir}'"
   watchexec -p -d 3000 -i '$__StoryList.tid' -- git-pushall
 }
+
+function sync_wiki {
+  wiki_dir="${1}"
+
+  cd "${wiki_dir}"
+  if [[ ! -d "tiddlers" ]]; then
+    echo_error "This script needs to be run from inside a TiddlyWiki directory"
+    exit 1
+  fi
+
+  echo_notify "Syncing wiki with upstream..."
+  git pull --rebase
+}

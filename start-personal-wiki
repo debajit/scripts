@@ -2,4 +2,5 @@
 
 source "wiki.sh"
 
+sync_wiki "${PERSONAL_WIKI_ROOT}"
 start_wiki "${PERSONAL_WIKI_ROOT}" "${PERSONAL_WIKI_PORT}"
