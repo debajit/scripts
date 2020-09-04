@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# backup-book-category - Backs up the books to the given remote.
+# backup-book-category - Backs up the category of books to the given remote.
 #
 # SYNOPSIS
 #   backup-book-category <CATEGORY>
@@ -9,8 +9,10 @@
 # DESCRIPTION
 #   Copies the given Books sub-directory to the given cloud storages.
 #
-# EXAMPLES
+# NOTE
+#   This script can be run from any directory.
 #
+# EXAMPLES
 #    backup-book-category Thinking
 #    backup-book-category Classics
 #
