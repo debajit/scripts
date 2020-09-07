@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#
+# stream-clipboard-url - Stream a video URL in the clipboard
+#
+# SYNOPSIS
+#   Streams the video URL currently in the clipboard.
+#
+# DESCRIPTION
+#   Takes the video or livestream URL in the clipboard and opens it
+#   with mpv. mpv allows one to apply several adjustments to the video
+#   such as speeding up the audio, or applying color adjustments on
+#   the fly (like contrast or saturation).
+#
+#   Adapted from Kris Occhipinti’s script from
+#   https://www.youtube.com/watch?v=FsQuGplQvrw
+#
+# EXAMPLE
+#   stream-clipboard-url
+#
+# NOTE
+#   Tip: you can bind this to a keyboard shortcut to easily open video
+#   URLs in mpv with one keystroke.
+#
+# TODO: Handle the exit status from mpv.
+# TODO: Use notification.sh for sending the desktop notification.
+# TODO: Make this work on macOS. This has been tested on GNU/Linux only at the moment.
+#
+
+video_url="$(xclip -o -selection clipboard)"
+
+# For the list of icons supported, see
+# https://specifications.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+notify-send "Stream Clipboard URL" "Streaming video from ${video_url}" --icon=camera-video
+
+mpv "${video_url}"
