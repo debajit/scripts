@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+#
+# backup-cmus - Back up the local cmus directory to the cloud
+#
+# SYNOPSIS
+#   backup-cmus
+#
+# DESCRIPTION
+#   Copies the files in the local cmus directory (~/.config/cmus) with
+#   its playlists and library (which are just text files) to multiple
+#   cloud stores. An incremental copy is done, so only changed files
+#   are updated.
+#
+
+source "backup.sh"
+source "dir.sh"
+source "notification.sh"
+
+for remote in tulip box
+do
+  backup_dir "${HOME}/.config/cmus" "${remote}" "Debajit/Backups/cmus"
+done
