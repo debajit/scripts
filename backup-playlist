@@ -22,6 +22,8 @@
 #   backup-playlist Mellow
 #
 
+source "notification.sh"
+
 REMOTES=(box mega)
 SOURCE_PLAYLIST_DIRECTORY="${HOME}/.config/cmus/playlists"
 TARGET_PLAYLIST_DIRECTORY="${HOME}/MusicOnExternalDrive"
@@ -30,16 +32,6 @@ SOURCE_PLAYLIST_NAME="$1"
 TARGET_PLAYLIST_NAME="${SOURCE_PLAYLIST_NAME}.m3u"
 SOURCE_PLAYLIST_FILENAME="${SOURCE_PLAYLIST_DIRECTORY}/${SOURCE_PLAYLIST_NAME}"
 TARGET_PLAYLIST_FILENAME="${TARGET_PLAYLIST_DIRECTORY}/${TARGET_PLAYLIST_NAME}"
-
-# See also https://unix.stackexchange.com/a/438357/141850
-function echo_notify {
-  echo -e "$(tput bold)$(tput setaf 154)➥ $(tput setaf 49)${1}$(tput sgr0)"
-}
-
-function echo_error {
-  echo -e "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
-       "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
-}
 
 if [[ ! -r "${SOURCE_PLAYLIST_FILENAME}" ]]; then
   echo_error "CMUS playlist “${SOURCE_PLAYLIST_FILENAME}” does not exist"

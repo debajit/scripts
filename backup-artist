@@ -16,19 +16,11 @@
 #   backup-artist "Cradle of Filth"
 #
 
+source "notification.sh"
+
 REMOTES=(box mega)
 
 artist_dir="${1}"
-
-# See also https://unix.stackexchange.com/a/438357/141850
-function echo_notify {
-  echo -e "\n$(tput bold)$(tput setaf 48)➥ ${1}$(tput sgr0)"
-}
-
-function echo_error {
-  echo -e "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
-       "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
-}
 
 if [[ ! -d "${artist_dir}" ]]
 then
