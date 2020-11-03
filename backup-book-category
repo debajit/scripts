@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# backup-book-category - Backs up the category of books to the given remote.
+# backup-book-category - Backs up the category of books to the cloud storage.
 #
 # SYNOPSIS
 #   backup-book-category <CATEGORY>
@@ -17,30 +17,11 @@
 #    backup-book-category Classics
 #
 
+source "backup.sh"
+source "dir.sh"
 source "notification.sh"
 
-REMOTES=(box mega)
-BOOKS_DIR="${HOME}/Documents/Books"
-
-book_category="${1}"
-book_category_dir="${BOOKS_DIR}/${book_category}"
-
-if [[ ! -d "${book_category_dir}" ]]
-then
-  echo_error "Book category directory '${book_category_dir}' does not exist"
-  exit 1
-fi
-
-for remote in ${REMOTES[*]}; do
-  echo_notify "Backing up to '${book_category}' books to ${remote}..."
-  rclone -P copy "${book_category_dir}" "${remote}:Debajit/Documents/Books/${book_category}"
-
-  if [[ $? -eq 0 ]]; then
-    echo_notify "Successfully backed up to ${remote}"
-    # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
-    notify-send 'RClone' "Backed up '${book_category}' books to ${remote}"
-  else
-    echo_error "Failed to backup '${book_category}' books to ${remote}"
-    notify-send 'RClone' "Failed to backup '${book_category}' books to ${remote}" --icon=dialog-error
-  fi
+for remote in tulip box mega
+do
+  backup_dir "${HOME}/Documents/Books/${1}" "${remote}" "Debajit/Documents/Books/${1}"
 done
