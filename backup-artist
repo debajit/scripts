@@ -16,20 +16,13 @@
 #   backup-artist "Cradle of Filth"
 #
 
+source "backup.sh"
+source "dir.sh"
 source "notification.sh"
-
-REMOTES=(box mega)
 
 artist_dir="${1}"
 
-if [[ ! -d "${artist_dir}" ]]
-then
-  echo_error "Artist directory '${artist_dir}' does not exist"
-  exit 1
-fi
-
-for remote in ${REMOTES[*]}
+for remote in tulip box mega
 do
-  echo_notify "Backing up to ${remote}..."
-  rclone -P copy "${artist_dir}" "${remote}:Debajit/Music/${artist_dir}"
+  backup_dir "${artist_dir}" "${remote}" "Debajit/Music/${artist_dir}"
 done
