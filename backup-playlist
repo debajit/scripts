@@ -24,7 +24,7 @@
 
 source "notification.sh"
 
-REMOTES=(box mega)
+REMOTES=(tulip box mega)
 SOURCE_PLAYLIST_DIRECTORY="${HOME}/.config/cmus/playlists"
 TARGET_PLAYLIST_DIRECTORY="${HOME}/MusicOnExternalDrive"
 
