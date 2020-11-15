@@ -17,7 +17,7 @@ source "backup.sh"
 source "dir.sh"
 source "notification.sh"
 
-for remote in tulip box
+for remote in tulip box mega
 do
   backup_dir "${HOME}/.config/cmus" "${remote}" "Debajit/Backups/cmus"
 done
