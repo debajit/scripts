@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#
+# replace - Find and replace text in a git repo fast
+#
+# USAGE
+#   replace <TEXT_TO_FIND> <TEXT_TO_REPLACE_WITH>
+#
+# TODO: Clean up this script
+#
+
+set -o nounset   # Exit when using an undefined variable. Use ${VAR:-} to use an undefined VAR.
+set -o errexit   # Exit when a command fails. Append "|| true" if a command to fail.
+[[ "${DEBUG:-}" == 'true' ]] && set -o xtrace
+
+# readonly file_spec="${1}"
+readonly before="${1}"
+readonly after="${2}"
+
+time git grep "${before}" | cut -d ':' -f 1 | parallel --jobs "100%" --progress "gsed -i -e 's/${before}\b/${after}/g' {}"
+
+# time find . -name *.rb -exec gsed -i -e 's/old_service\b/new_service/g' {} \;
+# 33.106
+
+# time find . -name *.rb | parallel -j24 --progress "gsed -i -e 's/old_service\b/new_service/g' {}"
+# 20.136
+
+# time git grep old_service | cut -d ':' -f 1 | parallel -j24 --progress "gsed -i -e 's/old_service\b/new_service/g' {}"
+# 5.893
+
+# time rg old_service | cut -d ':' -f 1 | parallel -j24 --progress "gsed -i -e 's/old_service\b/new_service/g' {}"
+# 6.036
+
+# time git grep old_service | cut -d ':' -f 1 | xargs -I "{}" gsed -i -e 's/old_service\b/new_service/g' {}
+# no progress indicator
+# 6.963
