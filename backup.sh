@@ -16,7 +16,7 @@ function backup_dir {
   local local_dir_basename=$( basename "${local_dir}" )
   echo_notify "Backing up '${local_dir_basename}' to '${remote}:${remote_dir}'..."
 
-  if rclone -P copy "${local_dir}" "${remote}:${remote_dir}"; then
+  if rclone --exclude=".*" -P copy "${local_dir}" "${remote}:${remote_dir}"; then
     echo_notify "Successfully backed up '${local_dir_basename}' to ${remote}"
     # osascript -e 'display notification "✅ Uploaded changes" with title "Wiki Watcher" sound name "Submarine"'
     send_notification 'RClone' "Backed up '${local_dir_basename}' to '${remote}'"
