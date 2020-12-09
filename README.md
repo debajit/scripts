@@ -30,6 +30,7 @@ Utility shell scripts to solve various day-to-day problems.
 |:---------------------|:------------------------------------------------------------------------------------------------------------------------------------------------|
 | archive              | Archive a directory or file. Takes the given file or directory and generates a .tar.xz file with a timestamp. The original file is not touched. |
 | backup-book-category | Backs up the given Books sub-directory to the given cloud stores.                                                                               |
+| backup-receipts      | Backs up my receipts to a few cloud stores                                                                                                                                                |
 
 ## Notes Management / Zettelkasten
 
