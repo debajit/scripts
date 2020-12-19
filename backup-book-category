@@ -23,5 +23,5 @@ source "notification.sh"
 
 for remote in tulip box mega
 do
-  backup_dir "${HOME}/Documents/Books/${1}" "${remote}" "Debajit/Documents/Books/${1}"
+  backup_dir "${HOME}/BooksOnExternalDrive/${1}" "${remote}" "Debajit/Documents/Books/${1}"
 done
