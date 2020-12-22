@@ -18,15 +18,16 @@
 #   This script works, but is currently a work in progress
 #
 
-source "backup.sh"
+source "backup-util.sh"
 source "dir.sh"
 source "notification.sh"
 
 readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
-  [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
+  [receipts]="${HOME}/Documents/Receipts Debajit/Documents/Receipts"
+  [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
 )
 
 readonly valid_backup_sources="${!CONFIG[@]}"

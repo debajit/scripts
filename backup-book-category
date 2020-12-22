@@ -17,7 +17,7 @@
 #    backup-book-category Classics
 #
 
-source "backup.sh"
+source "backup-util.sh"
 source "dir.sh"
 source "notification.sh"
 

@@ -16,7 +16,7 @@
 #   backup-artist "Cradle of Filth"
 #
 
-source "backup.sh"
+source "backup-util.sh"
 source "dir.sh"
 source "notification.sh"
 
