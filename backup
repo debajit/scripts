@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+#
+# backup - Back up the given resource to pre-configured remotes
+#
+# SYNOPSIS
+#   backup RESOURCE
+#
+# DESCRIPTION
+#   Backs up the given resource to its configured remote locations. An
+#   incremental copy is done where possible.
+#
+# EXAMPLES
+#   backup wallpaper
+#   backup cmus
+#
+# NOTE
+#   This script works, but is currently a work in progress
+#
+
+source "backup.sh"
+source "dir.sh"
+source "notification.sh"
+
+readonly REMOTES=(tulip box mega)
+
+declare -Ar CONFIG=(
+  [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
+  [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
+)
+
+readonly valid_backup_sources="${!CONFIG[@]}"
+
+readonly backup_source="${1}"
+
+# TODO: Refactor into assert_arg_present
+if [[ -z "${backup_source}" ]]
+then
+  echo_error "You need to specify a resource to backup. Valid resource values are: ${valid_backup_sources}"
+  exit 1
+fi
+
+# TODO: Refactor into array utilities file
+function in_list() {
+  local -r list="${1}"
+  local -r needle="${2}"
+
+  for item in ${list}; do
+    [[ "${item}" == "${needle}" ]] && return 0
+  done
+
+  return 1
+}
+
+# TODO: Refactor into assert_item_in_list
+if ! in_list "${valid_backup_sources}" "${backup_source}" ; then
+  echo_error "Invalid backup source '${backup_source}'. Valid source values are: ${valid_backup_sources}"
+  exit 1
+fi
+
+readonly backup_config=(${CONFIG["${1}"]})
+readonly local_dir=${backup_config[0]}
+readonly remote_dir=${backup_config[1]}
+
+# TODO: Use a switch case here to specialize the backup types e.g. for artist
+
+for remote in ${REMOTES[@]}
+do
+  # echo "${local_dir} => ${remote}:${remote_dir}"
+  backup_dir "$local_dir" "${remote}" "${remote_dir}"
+done
