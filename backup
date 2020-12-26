@@ -25,6 +25,7 @@ source "notification.sh"
 readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
+  [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
   [receipts]="${HOME}/Documents/Receipts Debajit/Documents/Receipts"
   [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
@@ -60,10 +61,29 @@ if ! in_list "${valid_backup_sources}" "${backup_source}" ; then
 fi
 
 readonly backup_config=(${CONFIG["${1}"]})
-readonly local_dir=${backup_config[0]}
-readonly remote_dir=${backup_config[1]}
+local_dir=${backup_config[0]}
+remote_dir=${backup_config[1]}
 
-# TODO: Use a switch case here to specialize the backup types e.g. for artist
+# Handle backup sources that need additional arguments
+case "${backup_source}" in
+  artist)
+    dir="${2%/}"
+
+    # TODO: Use assert_arg_present
+    if [[ -z "${dir}" ]]
+    then
+      echo_error "You need to specify the ${backup_source} e.g. 'backup ${backup_source} ${backup_source^^}'"
+      exit 1
+    fi
+
+    local_dir+="/${dir}"
+    assert_dir_exists "${local_dir}"
+
+    remote_dir+="/${dir}"
+    ;;
+
+  *)
+esac
 
 for remote in ${REMOTES[@]}
 do
