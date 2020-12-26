@@ -26,6 +26,7 @@ readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
   [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
+  [book-category]="${HOME}/BooksOnExternalDrive Debajit/Books"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
   [receipts]="${HOME}/Documents/Receipts Debajit/Documents/Receipts"
   [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
@@ -66,7 +67,7 @@ remote_dir=${backup_config[1]}
 
 # Handle backup sources that need additional arguments
 case "${backup_source}" in
-  artist)
+  artist|book-category)
     dir="${2%/}"
 
     # TODO: Use assert_arg_present
