@@ -26,7 +26,7 @@ readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
   [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
-  [book-category]="${HOME}/BooksOnExternalDrive Debajit/Books"
+  [book-category]="${HOME}/BooksOnExternalDrive Debajit/Documents/Books"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
   [receipts]="${HOME}/Documents/Receipts Debajit/Documents/Receipts"
   [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
