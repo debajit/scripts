@@ -11,8 +11,9 @@
 #   incremental copy is done where possible.
 #
 # EXAMPLES
-#   backup wallpaper
-#   backup cmus
+#   backup watch      # Backup the current directory using Duplicacy, whenever any file changes
+#   backup wallpaper  # Backup wallpapers to multiple cloud stores
+#   backup cmus       # Backup cmus confiration to multiple cloud stores
 #
 # NOTE
 #   This script works, but is currently a work in progress
@@ -25,6 +26,7 @@ source "notification.sh"
 readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
+  [watch]=""
   [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
   [book-category]="${HOME}/BooksOnExternalDrive Debajit/Documents/Books"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
@@ -57,8 +59,15 @@ function in_list() {
 
 # TODO: Refactor into assert_item_in_list
 if ! in_list "${valid_backup_sources}" "${backup_source}" ; then
+  # TODO: Rename to backup option or backup command
   echo_error "Invalid backup source '${backup_source}'. Valid source values are: ${valid_backup_sources}"
   exit 1
+fi
+
+# backup watch
+if [[ "${backup_source}" == 'watch' ]]; then
+  watchexec -p -d 3000 -i .duplicacy -- duplicacy backup -threads 12 -stats
+  exit 0
 fi
 
 readonly backup_config=(${CONFIG["${1}"]})
