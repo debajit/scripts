@@ -27,6 +27,7 @@ readonly REMOTES=(tulip box mega)
 
 declare -Ar CONFIG=(
   [watch]=""
+  [archive]="${HOME}/Archive Debajit/Archive"
   [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
   [bookshelf]="${HOME}/Bookshelf Debajit/Bookshelf"
   [book-category]="${HOME}/BooksOnExternalDrive Debajit/Documents/Books"
