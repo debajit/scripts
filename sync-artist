@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 #
 # sync-artist
@@ -6,12 +6,44 @@
 # Syncs the artist directory from the local disk to the remote,
 # deleting files from the remote if required.
 #
+# DEPENDENCIES:
+# - bat for --dry-run option (for diff highlighting)
+#
 
-if [[ -d "${1}" ]]; then
-  rclone -P sync "${1}" "box:Debajit/Music/${1}"
-  rclone -P sync "${1}" "mega:Debajit/Music/${1}"
+set -euo pipefail
+
+source "notification.sh"
+
+die() { echo_error "${1}" ; exit 1; }
+
+dry_run=0
+artist=""
+
+while [[ -n "${1:-}" ]]; do
+  case "${1}" in
+    -n|--dry-run)
+      dry_run=1
+      ;;
+    -*)
+      echo_error "Invalid option '${1}'"
+      exit 1
+      ;;
+    *)
+      artist="${1}"
+      ;;
+  esac
+
+  shift
+done
+
+[[ -d "${artist}" ]] || die "Artist directory '${artist}' does not exist"
+
+if [[ $dry_run == 1 ]]; then
+  echo_notify "Dry-syncing artist '${artist}'..."
+  rclone check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
 else
-  echo "Artist directory '${1}' does not exist"
-  exit 1
+  echo_notify "Syncing artist '${artist}' to box"
+  rclone -P sync "${artist}" "box:Debajit/Music/${artist}"
+  echo_notify "Syncing artist '${artist}' to tulip"
+  rclone -P sync "${artist}" "tulip:Debajit/Music/${artist}"
 fi
-
