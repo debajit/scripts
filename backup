@@ -32,7 +32,7 @@ declare -Ar CONFIG=(
   [bookshelf]="${HOME}/Bookshelf Debajit/Bookshelf"
   [book-category]="${HOME}/Bookshelf/Books Debajit/Bookshelf/Books"
   [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
-  [receipts]="${HOME}/Documents/Receipts Debajit/Documents/Receipts"
+  [receipts]="${HOME}/Archive/Receipts Debajit/Archive/Receipts"
   [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
 )
 
