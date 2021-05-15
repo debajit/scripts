@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 #
-# sync-to-nas-artist - Sync music artist to NAS
+# sync-artist-to-nas - Sync music artist to NAS
 #
 # DESCRIPTION
 #   Syncs the artist directory from the local disk to the local NAS,
@@ -12,9 +12,9 @@
 #     Does a dry-run and shows what file changes will be made
 #
 # EXAMPLES
-#   sync-to-nas-artist 'Rammstein' --dry-run
-#   sync-to-nas-artist -n 'Jonita Gandhi/'
-#   sync-to-nas-artist 'Joe Satriani'
+#   sync-artist-to-nas 'Rammstein' --dry-run
+#   sync-artist-to-nas -n 'Jonita Gandhi/'
+#   sync-artist-to-nas 'Joe Satriani'
 #
 # NOTE
 
