@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 #
 # sync-artist-to-nas - Sync music artist to NAS
@@ -15,15 +15,6 @@
 #   sync-artist-to-nas 'Rammstein' --dry-run
 #   sync-artist-to-nas -n 'Jonita Gandhi/'
 #   sync-artist-to-nas 'Joe Satriani'
-#
-# NOTE
-
-#  - Trailing slashes in the artist directory do not matter (they are
-#    all removed).
-
-#  - I use zsh as the script runner here to be able to use the
-#    ${var:a} construct to remove all trailing slashes (The bash
-#    construct ${var%/} only removes one trailing slash).
 #
 
 set -euo pipefail
@@ -46,8 +37,8 @@ while [[ -n "${1:-}" ]]; do
       exit 1
       ;;
     *)
-      artist="${1:a}"
-      # artist="${1%/}"
+      # artist="${1:a}"
+      artist="${1%/}"
       ;;
   esac
 
