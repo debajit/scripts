@@ -51,7 +51,6 @@ done
 #   sync-artist                        # Display usage
 
 if [[ -z "${artist}" ]]; then   # Artist is blank
-  echo "artist is blank"
   if [[ $dry_run == 1 ]]; then
     # sync-artist -n
     echo_notify "Dry-syncing all local music..."
@@ -69,11 +68,13 @@ elif [[ -d "${artist}" ]]; then  # Artist found
     rclone check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
   else
     # sync-artist EXISTING_ARTIST
-    # Sync the artist
-    echo_notify "Syncing artist '${artist}' to box"
-    rclone -P sync "${artist}" "box:Debajit/Music/${artist}"
-    echo_notify "Syncing artist '${artist}' to tulip"
-    rclone -P sync "${artist}" "tulip:Debajit/Music/${artist}"
+    # Sync the artist to the cloud store
+
+    echo_notify "Syncing artist '${artist}' to box..."
+    rclone -P sync --exclude '.*{/**,}' "${artist}/" "box:Debajit/Music/${artist}/"
+
+    echo_notify "Syncing artist '${artist}' to tardigrade..."
+    rclone -P sync --exclude '.*{/**,}' "${artist}/" "tardigrade:debajit/Music/${artist}/"
   fi
 else
   die "Artist directory '${artist}' does not exist"
