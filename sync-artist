@@ -6,6 +6,15 @@
 # Syncs the artist directory from the local disk to the remote,
 # deleting files from the remote if required.
 #
+# OPTIONS
+#   sync-artist [ARTIST_NAME] [-n/--dry-run]
+#
+# EXAMPLES
+#   sync-artist ARTIST_NAME            # Sync the given artist to the cloud
+#   sync-artist ARTIST_NAME -n         # Dry-run a sync of the given artist to the cloud
+#   sync-artist -n                     # Dry-run a sync of the entire local music collection
+#   sync-artist                        # Display usage
+#
 # DEPENDENCIES:
 # - bat for --dry-run option (for diff highlighting)
 #
@@ -13,8 +22,6 @@
 set -euo pipefail
 
 source "notification.sh"
-
-die() { echo_error "${1}" ; exit 1; }
 
 dry_run=0
 artist=""
@@ -36,14 +43,38 @@ while [[ -n "${1:-}" ]]; do
   shift
 done
 
-[[ -d "${artist}" ]] || die "Artist directory '${artist}' does not exist"
 
-if [[ $dry_run == 1 ]]; then
-  echo_notify "Dry-syncing artist '${artist}'..."
-  rclone check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
+# We will handle the following cases:
+#   sync-artist ARTIST_NAME            # Sync the given artist to the cloud
+#   sync-artist ARTIST_NAME -n         # Dry-run a sync of the given artist to the cloud
+#   sync-artist -n                     # Dry-run a sync of the entire local music collection
+#   sync-artist                        # Display usage
+
+if [[ -z "${artist}" ]]; then   # Artist is blank
+  echo "artist is blank"
+  if [[ $dry_run == 1 ]]; then
+    # sync-artist -n
+    echo_notify "Dry-syncing all local music..."
+    rclone check "${HOME}/MusicOnExternalDrive/" "box:Debajit/Music/" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
+  else
+    # sync-artist
+    # Display usage
+    echo_notify "Usage: sync-artist [ARTIST_NAME] [-n/--dry-run]"
+  fi
+elif [[ -d "${artist}" ]]; then  # Artist found
+  if [[ $dry_run == 1 ]]; then
+    # sync-artist EXISTING_ARTIST -n
+    # Dry-sync the existing artist
+    echo_notify "Dry-syncing artist '${artist}'..."
+    rclone check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
+  else
+    # sync-artist EXISTING_ARTIST
+    # Sync the artist
+    echo_notify "Syncing artist '${artist}' to box"
+    rclone -P sync "${artist}" "box:Debajit/Music/${artist}"
+    echo_notify "Syncing artist '${artist}' to tulip"
+    rclone -P sync "${artist}" "tulip:Debajit/Music/${artist}"
+  fi
 else
-  echo_notify "Syncing artist '${artist}' to box"
-  rclone -P sync "${artist}" "box:Debajit/Music/${artist}"
-  echo_notify "Syncing artist '${artist}' to tulip"
-  rclone -P sync "${artist}" "tulip:Debajit/Music/${artist}"
+  die "Artist directory '${artist}' does not exist"
 fi

@@ -8,6 +8,8 @@ function echo_error {
        "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
 }
 
+die() { echo_error "${1}" ; exit 1; }
+
 function send_notification {
   title="${1}"
   message="${2}"
