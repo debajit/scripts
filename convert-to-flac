@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+#
+# convert-to-flac
+#
+# USAGE:
+#   convert-to-flac - Convert all the wav files in the current dir to FLAC format
+#   convert-to-flac FILE_TO_CONVERT - (TODO)
+#
+# DESCRIPTION:
+#   Converts the given files to FLAC format
+#
+# References:
+# - https://superuser.com/questions/1426601/how-to-remove-extension-from-pathname-passed-as-in-find-exec
+
+
+find . -name "*.wav" -exec sh -c 'echo "${1%.*}.flac"' sh {} \;
