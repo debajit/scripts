@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+#
+# cleanup
+#
+# Cleans up disk space in Manjaro GNU/Linux by deleting unused files,
+# journals, packages and caches.
+#
+
+# Vacuum journals
+sudo journalctl --vacuum-size=500M && sudo journalctl --vacuum-time=7d
+
+# Clean up package caches
+pamac remove --orphans       # Remove orphaned libraries
+pamac clean --build-files -v # Clean pamac build cache
+sudo paccache -rvuk0         # Remove all uninstalled packages
+sudo paccache -rvk3          # Remove old installed packages, leave 3
+# sudo pacman -Sc
+# sudo pacman -Qdt
+# sudo pacman -Rns $(pacman -Qtdq)
+
+# Remove ~/.cache files that have not been accessed in the last 100 days
+find ~/.cache -depth -type f -mtime +100 -delete
+
+# Clean temporary build files
+rm -rf ~/{.bundle,.cargo,.cmake,.dotnet,.electron,.electron-gyp,.gem,.gradle,.lazarus,.node-gyp,.npm,.nuget,.nvm,.racket,.rustup,.stack,.yarn} || true
+rm -rf ~/.cache/{electron,electron-builder,go-build,node-gyp,pip,yarn} || true
+sudo rm -rf ~/go || true
