@@ -54,7 +54,7 @@ if [[ -z "${artist}" ]]; then   # Artist is blank
   if [[ $dry_run == 1 ]]; then
     # sync-artist -n
     echo_notify "Dry-syncing all local music..."
-    rclone check "${HOME}/MusicOnExternalDrive/" "box:Debajit/Music/" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
+    rclone -L check "${HOME}/MusicOnExternalDrive/" "box:Debajit/Music/" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
   else
     # sync-artist
     # Display usage
@@ -65,16 +65,19 @@ elif [[ -d "${artist}" ]]; then  # Artist found
     # sync-artist EXISTING_ARTIST -n
     # Dry-sync the existing artist
     echo_notify "Dry-syncing artist '${artist}'..."
-    rclone check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
+    rclone -L check "${artist}" "box:Debajit/Music/${artist}" --combined - 2> /dev/null | grep -v '^=' | bat -p --language=diff
   else
     # sync-artist EXISTING_ARTIST
     # Sync the artist to the cloud store
 
     echo_notify "Syncing artist '${artist}' to box..."
-    rclone -P sync --exclude '.*{/**,}' "${artist}/" "box:Debajit/Music/${artist}/"
+    rclone -PL sync --exclude '.*{/**,}' "${artist}/" "box:Debajit/Music/${artist}/"
 
     echo_notify "Syncing artist '${artist}' to tardigrade..."
-    rclone -P sync --exclude '.*{/**,}' "${artist}/" "tardigrade:debajit/Music/${artist}/"
+    rclone -PL sync --exclude '.*{/**,}' "${artist}/" "tardigrade:debajit/Music/${artist}/"
+
+    # echo_notify "Syncing artist '${artist}' to tardigrade..."
+    # rclone -P sync --exclude '.*{/**,}' "${artist}/" "tulip:Debajit/Music/${artist}/"
   fi
 else
   die "Artist directory '${artist}' does not exist"
