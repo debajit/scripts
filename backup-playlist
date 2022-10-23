@@ -22,9 +22,12 @@
 #   backup-playlist Mellow
 #
 
+set -euo pipefail
+
 source "notification.sh"
 
-REMOTES=(tulip box mega)
+# REMOTES=(tulip box mega)
+REMOTES=(box)
 SOURCE_PLAYLIST_DIRECTORY="${HOME}/.config/cmus/playlists"
 TARGET_PLAYLIST_DIRECTORY="${HOME}/MusicOnExternalDrive"
 
@@ -33,22 +36,60 @@ TARGET_PLAYLIST_NAME="${SOURCE_PLAYLIST_NAME}.m3u"
 SOURCE_PLAYLIST_FILENAME="${SOURCE_PLAYLIST_DIRECTORY}/${SOURCE_PLAYLIST_NAME}"
 TARGET_PLAYLIST_FILENAME="${TARGET_PLAYLIST_DIRECTORY}/${TARGET_PLAYLIST_NAME}"
 
-if [[ ! -r "${SOURCE_PLAYLIST_FILENAME}" ]]; then
-  echo_error "CMUS playlist “${SOURCE_PLAYLIST_FILENAME}” does not exist"
-  exit 1
+#-----------------------------------------------------------
+# Validate source cmus playlist
+#-----------------------------------------------------------
+
+echo_notify "Checking if we can read the CMUS playlist “${SOURCE_PLAYLIST_FILENAME}” …"
+[[ -r "${SOURCE_PLAYLIST_FILENAME}" ]] || die "Cannot read CMUS playlist “${SOURCE_PLAYLIST_FILENAME}”"
+
+#-----------------------------------------------------------
+# Prepare to write target m3u playlist
+#-----------------------------------------------------------
+
+echo_notify "Checking if the annexed m3u playlist “${TARGET_PLAYLIST_FILENAME}” exists …"
+pushd "${TARGET_PLAYLIST_DIRECTORY}" &> /dev/null # We need to be in the target playlist directory to run git annex commands
+if [[ -h "${TARGET_PLAYLIST_FILENAME}" ]]; then
+  echo_notify "Unlocking annexed playlist for edits…"
+  git annex unlock "${TARGET_PLAYLIST_FILENAME}" || die "Failed to git-annex unlock playlist"
+else
+  # At this point the playlist either does not exist or exists and is writable
+  echo_notify "Can write m3u playlist ${TARGET_PLAYLIST_FILENAME}"
 fi
+
+#-----------------------------------------------------------
+# Write target playlist
+#-----------------------------------------------------------
 
 echo_notify 'Replacing absolute links with relative ones...'
 sed 's|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
-# ls -ld "${TARGET_PLAYLIST_FILENAME}"
-
 if [[ $? -eq 0 ]]; then
-  echo_notify "Successfully wrote playlist “${TARGET_PLAYLIST_FILENAME}”"
+  echo_notify "Successfully wrote playlist “${TARGET_PLAYLIST_NAME}”"
 else
-  echo_error "Failed to write playlist ${TARGET_PLAYLIST_FILENAME}"
+  die "Failed to write playlist ${TARGET_PLAYLIST_NAME}"
 fi
+
+#---------------------------------------------------------------------
+# Copy m3u playlist to add given rclone remotes (these are not the
+# git-annex remotes)
+#---------------------------------------------------------------------
 
 for remote in ${REMOTES[*]}; do
   echo_notify "Backing up to ${remote}..."
   rclone -P copy "${TARGET_PLAYLIST_FILENAME}" "${remote}:Debajit/Music/"
 done
+
+#-----------------------------------------------------------
+# Git annex the updated m3u playlist
+#-----------------------------------------------------------
+
+set -x
+echo_notify "Git-annexing playlist…"
+echo $(pwd)
+git annex add "${TARGET_PLAYLIST_NAME}" &&
+  git annex lock "${TARGET_PLAYLIST_NAME}" &&
+  git commit -m "Updated playlist ${TARGET_PLAYLIST_NAME}" &&
+  git annex copy --to b2 "${TARGET_PLAYLIST_FILENAME}" &&
+  git annex sync
+
+popd
