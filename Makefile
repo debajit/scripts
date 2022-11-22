@@ -16,7 +16,7 @@
 
 # See https://stackoverflow.com/a/53083343
 SOURCE_FILES = $(shell  git ls-files -- ':!:Makefile' ':!:README.md' ':!:LICENSE')
-INSTALL_DIR = ${HOME}/bin
+INSTALL_DIR = ${HOME}/.local/bin
 TARGET_FILES = $(addprefix $(INSTALL_DIR)/, $(SOURCE_FILES))
 
 .PHONY: install
