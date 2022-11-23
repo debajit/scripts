@@ -62,7 +62,7 @@ fi
 #-----------------------------------------------------------
 
 echo_notify 'Replacing absolute links with relative ones...'
-sed 's|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
+sed 's|/home/debajit/Archive/Music|.|; s|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${SOURCE_PLAYLIST_FILENAME}" > "${TARGET_PLAYLIST_FILENAME}"
 if [[ $? -eq 0 ]]; then
   echo_notify "Successfully wrote playlist “${TARGET_PLAYLIST_NAME}”"
 else
