@@ -73,8 +73,8 @@ elif [[ -d "${artist}" ]]; then  # Artist found
     echo_notify "Syncing artist '${artist}' to box..."
     rclone -PL sync --exclude '.*{/**,}' "${artist}/" "box:Debajit/Music/${artist}/"
 
-    echo_notify "Syncing artist '${artist}' to tardigrade..."
-    rclone -PL sync --exclude '.*{/**,}' "${artist}/" "tardigrade:debajit/Music/${artist}/"
+    # echo_notify "Syncing artist '${artist}' to tardigrade..."
+    # rclone -PL sync --exclude '.*{/**,}' "${artist}/" "tardigrade:debajit/Music/${artist}/"
 
     # echo_notify "Syncing artist '${artist}' to tardigrade..."
     # rclone -P sync --exclude '.*{/**,}' "${artist}/" "tulip:Debajit/Music/${artist}/"
