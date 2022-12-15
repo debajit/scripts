@@ -20,7 +20,7 @@
 
 source "notification.sh"
 
-PERSONAL_WIKI_ROOT="${HOME}/Projects/Knowledge/wiki"
+PERSONAL_WIKI_ROOT="${HOME}/Archive/Wiki"
 PERSONAL_WIKI_PORT=4444
 
 WORK_WIKI_ROOT="${HOME}/Documents/wiki"
