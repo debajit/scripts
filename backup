@@ -1,104 +1,30 @@
 #!/usr/bin/env bash
 
 #
-# backup - Back up the given resource to pre-configured remotes
+# backup - Backs up all important files that are important or not under revision control.
 #
 # SYNOPSIS
-#   backup RESOURCE
+#   backup
 #
 # DESCRIPTION
-#   Backs up the given resource to its configured remote locations. An
-#   incremental copy is done where possible.
-#
-# EXAMPLES
-#   backup watch      # Backup the current directory using Duplicacy, whenever any file changes
-#   backup wallpaper  # Backup wallpapers to multiple cloud stores
-#   backup cmus       # Backup cmus confiration to multiple cloud stores
-#
-# NOTE
-#   This script works, but is currently a work in progress
+#   Uses borg to backup a variety of important files.
 #
 
-source "backup-util.sh"
-source "dir.sh"
-source "notification.sh"
+set -euxo pipefail
 
-readonly REMOTES=(tulip box mega)
-
-declare -Ar CONFIG=(
-  [watch]=""
-  [archive]="${HOME}/Archive Debajit/Archive"
-  [artist]="${HOME}/MusicOnExternalDrive Debajit/Music"
-  [bookshelf]="${HOME}/Bookshelf Debajit/Bookshelf"
-  [book-category]="${HOME}/Bookshelf/Books Debajit/Bookshelf/Books"
-  [cmus]="${HOME}/.config/cmus Debajit/Backups/cmus"
-  [receipts]="${HOME}/Archive/Receipts Debajit/Archive/Receipts"
-  [wallpaper]="${HOME}/Pictures/Wallpaper Debajit/Pictures/Wallpaper"
-)
-
-readonly valid_backup_sources="${!CONFIG[@]}"
-
-readonly backup_source="${1}"
-
-# TODO: Refactor into assert_arg_present
-if [[ -z "${backup_source}" ]]
-then
-  echo_error "You need to specify a resource to backup. Valid resource values are: ${valid_backup_sources}"
-  exit 1
-fi
-
-# TODO: Refactor into array utilities file
-function in_list() {
-  local -r list="${1}"
-  local -r needle="${2}"
-
-  for item in ${list}; do
-    [[ "${item}" == "${needle}" ]] && return 0
-  done
-
-  return 1
-}
-
-# TODO: Refactor into assert_item_in_list
-if ! in_list "${valid_backup_sources}" "${backup_source}" ; then
-  # TODO: Rename to backup option or backup command
-  echo_error "Invalid backup source '${backup_source}'. Valid source values are: ${valid_backup_sources}"
-  exit 1
-fi
-
-# backup watch
-if [[ "${backup_source}" == 'watch' ]]; then
-  watchexec -p -d 3000 -i .duplicacy -- duplicacy backup -threads 12 -stats
-  exit 0
-fi
-
-readonly backup_config=(${CONFIG["${1}"]})
-local_dir=${backup_config[0]}
-remote_dir=${backup_config[1]}
-
-# Handle backup sources that need additional arguments
-case "${backup_source}" in
-  artist|book-category)
-    dir="${2%/}"
-
-    # TODO: Use assert_arg_present
-    if [[ -z "${dir}" ]]
-    then
-      echo_error "You need to specify the ${backup_source} e.g. 'backup ${backup_source} ${backup_source^^}'"
-      exit 1
-    fi
-
-    local_dir+="/${dir}"
-    assert_dir_exists "${local_dir}"
-
-    remote_dir+="/${dir}"
-    ;;
-
-  *)
-esac
-
-for remote in ${REMOTES[@]}
-do
-  # echo "${local_dir} => ${remote}:${remote_dir}"
-  backup_dir "$local_dir" "${remote}" "${remote_dir}"
-done
+borg create --stats --progress --exclude-from $HOME/.borg-exclude.lst ::archive-{hostname}-{now} \
+    $HOME/.emacs.d \
+    $HOME/.zsh* \
+    $HOME/.aliases* \
+    $HOME/.env_vars* \
+    $HOME/.paths* \
+    $HOME/.app-config* \
+    $HOME/.config/cmus/* \
+    $HOME/.config/rclone/* \
+    $HOME/.hunspell_en_US \
+    $HOME/.local/share/fonts/* \
+    $HOME/Archive/Contacts \
+    $HOME/Archive/Notes \
+    $HOME/Projects \
+    /etc/hosts \
+    /etc/fstab
