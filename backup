@@ -1,18 +1,29 @@
 #!/usr/bin/env bash
 
 #
-# backup - Backs up all important files that are important or not under revision control.
+# backup - Backs up important files that are generally not in git, git annex, or a BtrFS snapshot.
 #
 # SYNOPSIS
 #   backup
 #
 # DESCRIPTION
-#   Uses borg to backup a variety of important files.
+#   Uses borg to backup a variety of important files. These are mostly
+#   user-files (with a few important system files for reference) that
+#   are typically
+#
+#   - Not under revision control. This may include important
+#     work-in-progress documents (like notes) that have not been
+#     synced to the git upstream for instance.
+#
+#   - Not git-annexed
+#
+#   - Not backed up by the default BtrFS system snapshots (managed by
+#     Timeshift for instance)
 #
 
 set -euxo pipefail
 
-borg create --stats --progress --exclude-from $HOME/.borg-exclude.lst ::archive-{hostname}-{now} \
+borg create --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'archive-{hostname}-{now}' \
     $HOME/.emacs.d \
     $HOME/.zsh* \
     $HOME/.aliases* \
@@ -28,3 +39,5 @@ borg create --stats --progress --exclude-from $HOME/.borg-exclude.lst ::archive-
     $HOME/Projects \
     /etc/hosts \
     /etc/fstab
+
+# TODO: Prune old backups. Remember to take the clientname into account
