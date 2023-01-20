@@ -35,8 +35,7 @@ borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'arch
     $HOME/.config/rclone/* \
     $HOME/.hunspell_en_US \
     $HOME/.local/share/fonts/* \
-    $HOME/Archive/Contacts \
-    $HOME/Archive/Notes \
+    $HOME/Archive/Knowledge \
     $HOME/Projects \
     /etc/hosts \
     /etc/fstab
