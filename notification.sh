@@ -1,11 +1,11 @@
 # See also https://unix.stackexchange.com/a/438357/141850
 function echo_notify {
-  echo "$(tput bold)$(tput setaf 154)➥ $(tput setaf 49)${1}$(tput sgr0)"
+  echo -e "$(tput bold)$(tput setaf 154)➥ $(tput setaf 49)${1}$(tput sgr0)"
 }
 
 function echo_error {
-  echo "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
-       "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
+  echo -e "$(tput bold)$(tput setaf 230)$(tput setab 196) ✘  Error $(tput sgr0) " \
+          "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
 }
 
 die() { echo_error "${1}" ; exit 1; }
