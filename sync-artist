@@ -82,3 +82,13 @@ elif [[ -d "${artist}" ]]; then  # Artist found
 else
   die "Artist directory '${artist}' does not exist"
 fi
+
+# Sync artist to the NAS as well, if available
+
+echo_notify "Checking if the NAS is reachable…"
+
+if ping -w 1 nas &> /dev/null; then
+  sync-artist-to-nas "${artist}"
+else
+  echo_error "The NAS is not reachable. Not syncing '${artist}' to the NAS"
+fi
