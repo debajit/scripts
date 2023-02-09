@@ -40,8 +40,8 @@ TARGET_PLAYLIST_FILENAME="${TARGET_PLAYLIST_DIRECTORY}/${TARGET_PLAYLIST_NAME}"
 # Validate source cmus playlist
 #-----------------------------------------------------------
 
-echo_notify "Checking if we can read the CMUS playlist “${SOURCE_PLAYLIST_FILENAME}” …"
-[[ -r "${SOURCE_PLAYLIST_FILENAME}" ]] || die "Cannot read CMUS playlist “${SOURCE_PLAYLIST_FILENAME}”"
+echo_notify "Checking if we can read the cmus playlist “${SOURCE_PLAYLIST_FILENAME}” …"
+[[ -r "${SOURCE_PLAYLIST_FILENAME}" ]] || die "Cannot read cmus playlist “${SOURCE_PLAYLIST_FILENAME}”. Note that the cmus playlist does not have an extension."
 
 #-----------------------------------------------------------
 # Prepare to write target m3u playlist
