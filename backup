@@ -32,6 +32,7 @@ borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'arch
     $HOME/.app-config* \
     $HOME/.config/cmus/* \
     $HOME/.config/espanso/* \
+    $HOME/.config/ranger/* \
     $HOME/.config/rclone/* \
     $HOME/.hunspell_en_US \
     $HOME/.local/share/fonts/* \
