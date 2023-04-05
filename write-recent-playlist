@@ -1,19 +1,21 @@
 #!/usr/bin/env zsh
 
 #
-# write-recent-playlist - Creates a "Recent" cmus playlist with all the recently added music.
+# write-recent-playlist - Creates a "@Recent" cmus playlist with all the recently added music.
 #
 # SYNOPSIS
 #   write-recent-playlist
 #
 # DESCRIPTION
 #   Takes all the music files in $HOME/Archive/Music and writes a
-#   "Recent" cmus playlist with the most recently added file first.
+#   "@Recent" cmus playlist with the most recently added file first.
 #
 
 set -euo pipefail
 
 source "notification.sh"        # Provides echo_notify, echo_error
+
+playlist_name="@Recent"
 
 if \ls -t \
     $HOME/Archive/Music/**/*.flac \
@@ -21,8 +23,8 @@ if \ls -t \
     $HOME/Archive/Music/**/*.mp3 \
     $HOME/Archive/Music/**/*.MP3 \
     $HOME/Archive/Music/**/*.wav > \
-    $HOME/.config/cmus/playlists/Recent; then
-  echo_notify 'Wrote "Recent" cmus playlist'
+    "$HOME/.config/cmus/playlists/${playlist_name}"; then
+  echo_notify "Wrote '${playlist_name}' cmus playlist"
 else
-  echo_error 'Failed to write "Recent" playlist'
+  echo_error "Failed to write '${playlist_name}' cmus playlist"
 fi
