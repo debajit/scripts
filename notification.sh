@@ -8,6 +8,18 @@ function echo_error {
           "$(tput bold)$(tput setaf 229)${1}$(tput sgr0)"
 }
 
+function green {
+  echo -en "$(tput bold)$(tput setaf 154)$(tput setaf 49)${1}$(tput sgr0)"
+}
+
+function red {
+  # echo -en "$(tput bold)$(tput setaf 203)${1}$(tput sgr0)"
+  # echo -en "$(tput bold)$(tput setaf 204)${1}$(tput sgr0)"
+  echo -en "$(tput bold)$(tput setaf 198)${1}$(tput sgr0)"
+  # echo -en "$(tput bold)$(tput setaf 9)${1}$(tput sgr0)"
+}
+
+
 die() { echo_error "${1}" ; exit 1; }
 
 function send_notification {
