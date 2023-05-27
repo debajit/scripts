@@ -36,13 +36,16 @@ borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'arch
     $HOME/.config/ranger/* \
     $HOME/.config/rclone/* \
     $HOME/{.config,.local/share}/liferea \
-    $HOME/.ssh/config \
     $HOME/.hunspell_en_US \
     $HOME/.local/share/Anki2 \
     $HOME/.local/share/fonts/* \
     $HOME/Archive/Knowledge \
     $HOME/Projects \
+    $HOME/.ssh/config \
+    /boot \
+    /etc/fstab \
     /etc/hosts \
-    /etc/fstab
+    /etc/mkinitcpio* \
+    /etc/ssh/sshd_config
 
 # TODO: Prune old backups. Remember to take the clientname into account
