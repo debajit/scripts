@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#
+# WIP
+#
+
+#
+# start-server - DESCRIPTION
+#
+# SYNOPSIS
+#   start-server PARAMETER1
+#
+# DESCRIPTION
+#   TODO: Describe what the script does.
+#
+# EXAMPLES
+#   start-server ARG1  # Describe what this does
+#   start-server ARG2  # Describe what this does
+#
+# NOTE
+#   This script works, but is currently a work in progress
+#
+
+# TODO: Rename to run-app
+
+set -euo pipefail              # TODO: Remove the x after testing
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+usage() {
+
+}
+
+show-progress() {
+  message="${1}"
+  gum spin --spinner points --title "${message}"
+}
+
+if [[ -f "./config/_default/hugo.yaml" ]]; then
+  show-progress "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir --navigateToChanged
+elif [[ -f "./package-lock.json" ]]; then
+  show-progress "Starting npm server..." -- npm start
+fi
