@@ -1,35 +1,20 @@
 #!/usr/bin/env bash
 
 #
-# WIP
-#
-
-#
-# start-server - DESCRIPTION
+# run-app - Runs the application or a local server polymorphically depending on the directory
 #
 # SYNOPSIS
-#   start-server PARAMETER1
+#   run-app
 #
 # DESCRIPTION
-#   TODO: Describe what the script does.
-#
-# EXAMPLES
-#   start-server ARG1  # Describe what this does
-#   start-server ARG2  # Describe what this does
-#
-# NOTE
-#   This script works, but is currently a work in progress
+#   Depending on the directory where this script is run from, runs a
+#   local server or the application. What is run is decided based on a
+#   set of rules defined in this script.
 #
 
-# TODO: Rename to run-app
-
-set -euo pipefail              # TODO: Remove the x after testing
+set -euo pipefail
 
 source "notification.sh"        # Provides echo_notify, echo_error
-
-usage() {
-
-}
 
 show-progress() {
   message="${1}"
