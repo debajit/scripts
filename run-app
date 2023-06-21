@@ -14,15 +14,8 @@
 
 set -euo pipefail
 
-source "notification.sh"        # Provides echo_notify, echo_error
-
-show-progress() {
-  message="${1}"
-  gum spin --spinner points --title "${message}"
-}
-
 if [[ -f "./config/_default/hugo.yaml" ]]; then
-  show-progress "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir --navigateToChanged
+  gum spin --spinner points --title "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir --navigateToChanged
 elif [[ -f "./package-lock.json" ]]; then
-  show-progress "Starting npm server..." -- npm start
+  npm start
 fi
