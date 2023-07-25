@@ -14,8 +14,14 @@
 
 set -euo pipefail
 
+current_dir_name="${PWD##*/}"
+
 if [[ -f "./config/_default/hugo.yaml" ]]; then
-  gum spin --spinner points --title "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir --navigateToChanged
+  gum spin --spinner points --title "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir
 elif [[ -f "./package-lock.json" ]]; then
   npm start
+else
+  case "$current_dir_name" in
+    dotfiles*) make;;
+  esac
 fi
