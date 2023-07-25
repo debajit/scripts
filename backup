@@ -40,6 +40,7 @@ borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'arch
     $HOME/.local/share/Anki2 \
     $HOME/.local/share/fonts/* \
     $HOME/Archive/Knowledge \
+    $HOME/Pictures/Screenshots/ \
     $HOME/Projects \
     $HOME/.ssh/config \
     /etc/fstab \
