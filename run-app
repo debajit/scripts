@@ -20,8 +20,10 @@ if [[ -f "./config/_default/hugo.yaml" ]]; then
   gum spin --spinner points --title "Starting Hugo server..." -- xdg-open "http://localhost:1313" && hugo server -D --cleanDestinationDir
 elif [[ -f "./package-lock.json" ]]; then
   npm start
-else
-  case "$current_dir_name" in
-    dotfiles*) make;;
-  esac
+elif [[ -f "Makefile" ]]; then
+  make -k
+# else
+#   case "$current_dir_name" in
+#     dotfiles*) make;;
+#   esac
 fi
