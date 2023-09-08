@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#
+# start-lan-chat - Starts a simple chat server on the LAN
+#
+# SYNOPSIS
+#   start-lan-chat [PORT]
+#
+# DESCRIPTION
+#   Starts a very simple chat server on the LAN (using netcat). This
+#   is designed to pair with the join-lan-chat script.
+#
+#   The main advantage of using this script instead of typing nc
+#   one-liners is that we don’t have to remember the exact nc syntax.
+#
+# EXAMPLES
+#   start-lan-chat        # Starts a chat server on the default port (55553)
+#   start-lan-chat 55556  # Starts a chat server on port 55556
+#
+# KNOWN ISSUES:
+#   (1) TODO: If a client presses Control+C, then the server quits
+#
+
+set -euo pipefail
+
+DEFAULT_CHAT_PORT=55553
+
+hostname=$(hostname)
+ip=$(ip -4 -br addr show wlan0 | awk '{ split($3, ip_addr, "/"); print ip_addr[1] }')
+server_port=${1:-"${DEFAULT_CHAT_PORT}"}
+
+if [[ "${server_port}" == "${DEFAULT_CHAT_PORT}" ]]; then
+  client_port=""
+else
+  client_port="${server_port}"
+fi
+
+echo -e "\n" \
+     "  On the client machine, run any of the following:\n\n" \
+     "  • join-lan-chat ${hostname} ${client_port}\n" \
+     "  • join-lan-chat ${ip} ${client_port}\n\n"
+
+nc -lp "${server_port}"

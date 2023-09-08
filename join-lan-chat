@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+#
+# join-lan-chat - Joins a chat server (on the LAN) started using the start-lan-chat script
+#
+# SYNOPSIS
+#   join-lan-chat [HOST] [PORT]
+#
+# DESCRIPTION
+#   Connects to the chat server started on the LAN using the start-lan-chat script.
+#
+
+set -euo pipefail
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+DEFAULT_CHAT_SERVER_HOSTNAME='gnuarch'
+DEFAULT_CHAT_PORT=55553
+
+chat_server_hostname=${1:-"${DEFAULT_CHAT_SERVER_HOSTNAME}"}
+chat_server_port=${2:-"${DEFAULT_CHAT_PORT}"}
+
+echo_notify "Connecting to chat server ${chat_server_hostname} on port ${chat_server_port}…"
+
+nc "${chat_server_hostname}" "${chat_server_port}"
