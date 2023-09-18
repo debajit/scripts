@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 #
-# convert-to-m4a
+# transcode-to-m4a
 #
 # USAGE:
-#   convert-to-m4a FILE_TO_CONVERT
-#   convert-to-m4a song.opus
+#   transcode-to-m4a FILE_TO_CONVERT
+#   transcode-to-m4a song.opus
 #
 # DESCRIPTION:
-#   Converts the given file to M4A (AAC) using the Fraunhofer
+#   Transcodes the given file to M4A (AAC) using the Fraunhofer
 #   libfdk-aac library (via fdkaac). See
 #   https://trac.ffmpeg.org/wiki/Encode/AAC
 #
