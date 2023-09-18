@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+#
+# prune-backups - Prunes borg backups to keep only a well-defined limited set of archives.
+#
+# SYNOPSIS
+#   prune-backups
+#
+# DESCRIPTION
+#   Prunes borg backups to keep only a well-defined limited set of
+#   archives. Also compacts the borg repo.
+#
+#   The borg commands run are copied to stdout for ease of logging
+#   e.g. when used as a cron job.
+#
+
+set -euo pipefail
+
+backup_prune_command='borg prune --stats --progress \
+    --glob-archives "archive-{hostname}-*" \
+    --keep-last=5 \
+    --keep-daily=7 \
+    --keep-weekly=4 \
+    --keep-monthly=6 \
+    --keep-yearly=1'
+
+case "${1:-}" in
+  -n | --dry-run)
+    echo "Dry pruning the backups…"
+    backup_prune_command="${backup_prune_command/--stats --progress/-v --list --dry-run}"
+    set -x
+    eval "${backup_prune_command}"
+    ;;
+
+  *)
+    echo "Pruning the backups…"
+    set -x
+    eval "${backup_prune_command}"
+    borg compact --progress
+esac
