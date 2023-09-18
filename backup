@@ -48,6 +48,7 @@ borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'arch
     /etc/ssh/sshd_config \
     /boot \
     /etc/mkinitcpio* \
+    /var/spool/cron/debajit \
     /home/debajit/.config/BraveSoftware/Brave-Browser/Default/Bookmarks
 
 
