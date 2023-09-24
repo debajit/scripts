@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 
 #
-# export-gthumb-catalog - Export a gThumb catalog into a local directory
+# gthumb-export-catalog - Export a gThumb photo catalog as images in a local directory
 #
 # SYNOPSIS
-#   export-gthumb-catalog PARAMETER1
+#   gthumb-export-catalog PARAMETER1
 #
 # DESCRIPTION
-#   Exports a gThumb catalog (which is just metadata) into a local
-#   directory. The export directory is named after the catalog and
-#   suffixed with a timestamp e.g. “Portraits--2023-01-02--10-10-20”.
-#   Each image file is renamed as CATALOG_NAME-01.<file_extension> and
-#   so on. The file extensions are preserved from the original.
+#   Exports a gThumb photo catalog (which is just metadata) into image
+#   fils in a local directory. The export directory is named after the
+#   catalog and suffixed with a timestamp e.g.
+#   “Portraits--2023-01-02--10-10-20”. Each image file is renamed as
+#   CATALOG_NAME-01.<file_extension> and so on. The file extensions
+#   are preserved from the original.
 #
 #   The image files are copied into the export directory and the
 #   original images are not touched.
 #
 # EXAMPLE
-#   export-gthumb-catalog Portraits  # Exports the “Portraits” gThumb catalog into Portraits--2023-01-02--10-10-20/Portraits-01.jpg and so on
+#   gthumb-export-catalog Portraits  # Exports the “Portraits” gThumb catalog into Portraits--2023-01-02--10-10-20/Portraits-01.jpg and so on
 #
 
 set -euo pipefail
