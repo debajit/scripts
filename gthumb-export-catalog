@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+#
+# export-gthumb-catalog - Export a gThumb catalog into a local directory
+#
+# SYNOPSIS
+#   export-gthumb-catalog PARAMETER1
+#
+# DESCRIPTION
+#   Exports a gThumb catalog (which is just metadata) into a local
+#   directory. The export directory is named after the catalog and
+#   suffixed with a timestamp e.g. “Portraits--2023-01-02--10-10-20”.
+#   Each image file is renamed as CATALOG_NAME-01.<file_extension> and
+#   so on. The file extensions are preserved from the original.
+#
+#   The image files are copied into the export directory and the
+#   original images are not touched.
+#
+# EXAMPLE
+#   export-gthumb-catalog Portraits  # Exports the “Portraits” gThumb catalog into Portraits--2023-01-02--10-10-20/Portraits-01.jpg and so on
+#
+
+set -euo pipefail
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+# Validate the arguments
+script_name="${0##*/}"
+if [[ $# -ne 1 ]]; then
+  echo
+  echo_notify "${script_name} - Export a gThumb catalog into a local directory"
+  echo "Usage:   ${script_name} <CATALOG_NAME>"
+  echo "Example: ${script_name} Portraits"
+  exit 1
+fi
+
+GTHUMB_CATALOGS_DIR="${HOME}/.local/share/gthumb/catalogs"
+
+# Get catalog name from the user
+catalog_name="${1}"
+catalog="${GTHUMB_CATALOGS_DIR}/${catalog_name}.catalog"
+[[ -r "${catalog}" ]] || die "Invalid gThumb catalog name: '${catalog}'"
+
+# Create export dir
+export_dir="${catalog_name}-$(date '+--%Y-%m-%d--%H-%M-%S')"
+mkdir -p "${export_dir}" || die "Failed to create export directory: '${export_dir}'"
+
+# Copy files in order, and rename them sequentially
+counter=1
+xml sel -t -v '//file/@uri' "${catalog}" | \
+  sed 's|file://||g' | \
+  ruby -rcgi -e 'puts CGI.unescape(ARGF.read)' | \
+  while read -r source_file; do
+    extension="${source_file##*.}"
+    exported_filename=$(printf "${catalog_name}-%02d.${extension}" "${counter}")
+
+    set -x
+    cp -i -- "${source_file}" "${export_dir}/${exported_filename}"
+    { set +x; } 2> /dev/null
+
+    ((++counter))
+  done
