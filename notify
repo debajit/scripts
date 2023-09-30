@@ -41,15 +41,12 @@ hostname=$(hostname)
 case "$#" in
   1)
     message="${1}"
-    echo "message: ${message}"
     notify-send "${hostname}" "'${message}'"
     ;;
 
   2)
     target_host="${1}"
     message="${2}"
-    echo "target_host: ${target_host}"
-    echo "message: '${message}'"
     ssh "${target_host}" "notify-send '${hostname}' '${message}'"
     ;;
 
