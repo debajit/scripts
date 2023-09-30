@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+#
+# notify - Sends a desktop notification, on the current machine or to another host
+#
+# SYNOPSIS
+#   notify MESSAGE
+#   notify HOSTNAME MESSAGE
+#
+# DESCRIPTION
+#   TODO: Describe what the script does.
+#
+# EXAMPLES
+#
+#   notify "hello there"        # Displays a desktop notification with the message "hello there", and title set to the current hostname.
+#
+#   notify gnuarch "hi there!"  # Displays a desktop notification on the given hostname with the given message and title set to the remote hostname.
+#
+# NOTE
+#   When sending notifications to another machine, ensure that you can
+#   SSH into that machine from your current machine. The message to
+#   display the notification in such a case is sent over SSH to the
+#   remote machine.
+#
+
+set -euo pipefail
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+usage() {
+  local script_name="${0##*/}"
+  echo_notify "${script_name} - Sends a desktop notification, on the current machine or another host\n"
+  echo "  Usage: "
+  echo "    ${script_name} MESSAGE            # Send a desktop notification on the current host"
+  echo "    ${script_name} HOSTNAME MESSAGE   # Send a desktop notification on another host"
+  exit 1
+}
+
+hostname=$(hostname)
+
+case "$#" in
+  1)
+    message="${1}"
+    echo "message: ${message}"
+    notify-send "${hostname}" "'${message}'"
+    ;;
+
+  2)
+    target_host="${1}"
+    message="${2}"
+    echo "target_host: ${target_host}"
+    echo "message: '${message}'"
+    ssh "${target_host}" "notify-send '${hostname}' '${message}'"
+    ;;
+
+  *)
+    usage
+esac
