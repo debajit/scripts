@@ -25,31 +25,15 @@ set -euxo pipefail
 
 borg create -v --stats --progress --exclude-from $HOME/.borg-exclude.lst ::'archive-{hostname}-{now}' \
     $HOME/.emacs.d \
-    $HOME/.zsh* \
-    $HOME/.zprofile \
-    $HOME/.aliases* \
-    $HOME/.env_vars* \
-    $HOME/.paths* \
-    $HOME/.app-config* \
-    $HOME/.config/cmus/* \
-    $HOME/.config/espanso/* \
-    $HOME/.config/ranger/* \
-    $HOME/.config/rclone/* \
+    $HOME/{.zsh*,.zprofile,.aliases*,.app-config*,.env_vars*,.paths*} \
+    $HOME/.config/{cmus,espanso,ranger,rclone}/* \
+    $HOME/.config/BraveSoftware/Brave-Browser/Default/Bookmarks \
     $HOME/{.config,.local/share}/liferea \
-    $HOME/.hunspell_en_US \
-    $HOME/.local/share/Anki2 \
-    $HOME/.local/share/fonts/* \
+    $HOME/.local/share/{Anki2,fonts,gthumb/catalogs}  \
+    $HOME/{.hunspell_en_US,.ssh/config} \
     $HOME/Archive/Knowledge \
     $HOME/Pictures/Screenshots/ \
     $HOME/Projects \
-    $HOME/.ssh/config \
-    /etc/fstab \
-    /etc/hosts \
-    /etc/ssh/sshd_config \
     /boot \
-    /etc/mkinitcpio* \
-    /var/spool/cron/debajit \
-    /home/debajit/.config/BraveSoftware/Brave-Browser/Default/Bookmarks
-
-
-# TODO: Prune old backups. Remember to take the clientname into account
+    /etc/{fstab,hosts,mkinitcpio*,ssh/sshd_config} \
+    /var/spool/cron/debajit
