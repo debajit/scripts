@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
 
 #
-# notify - Sends a desktop notification, on the current machine or to another host
+# notify - Sends a desktop notification, on the local machine, or to one or more remote hosts
 #
 # SYNOPSIS
 #   notify MESSAGE
-#   notify HOSTNAME MESSAGE
+#   notify MESSAGE REMOTE_HOSTNAME
+#   notify MESSAGE REMOTE_HOSTNAME1 REMOTE_HOSTNAME2 REMOTE_HOSTNAME3 ...
 #
 # DESCRIPTION
-#   TODO: Describe what the script does.
+#   Displays a desktop notification, on the current machine, or on one
+#   or more remote hosts. To send notifications to other machines,
+#   ensure that you can SSH into that machine from the current
+#   machine. The message to display the notification in such a case is
+#   sent over SSH to the remote machine.
 #
 # EXAMPLES
 #
-#   notify "hello there"        # Displays a desktop notification with the message "hello there", and title set to the current hostname.
+#   notify "hello there"
 #
-#   notify gnuarch "hi there!"  # Displays a desktop notification on the given hostname with the given message and title set to the remote hostname.
+#     Displays a desktop notification with the message "hello there",
+#     and title set to the current hostname.
 #
-# NOTE
-#   When sending notifications to another machine, ensure that you can
-#   SSH into that machine from your current machine. The message to
-#   display the notification in such a case is sent over SSH to the
-#   remote machine.
+#   notify "hi there!" gnuarch gnumanjaro
+#
+#     Displays a desktop notification with the message "hi there!" on
+#     the machines having the hostnames ‘gnuarch’ and ‘gnumanjaro’
 #
 
 set -euo pipefail
@@ -29,27 +34,23 @@ source "notification.sh"        # Provides echo_notify, echo_error
 
 usage() {
   local script_name="${0##*/}"
-  echo_notify "${script_name} - Sends a desktop notification, on the current machine or another host\n"
+  echo_notify "${script_name} - Sends a desktop notification, on the local machine, or to one or more remote hosts"
   echo "  Usage: "
-  echo "    ${script_name} MESSAGE            # Send a desktop notification on the current host"
-  echo "    ${script_name} HOSTNAME MESSAGE   # Send a desktop notification on another host"
+  echo "    ${script_name} MESSAGE                          # Send a desktop notification on the local host"
+  echo "    ${script_name} MESSAGE HOSTNAME                 # Send a desktop notification to another host"
+  echo "    ${script_name} MESSAGE HOSTNAME1 HOSTNAME2 ...  # Send a desktop notification to multiple hosts"
   exit 1
 }
 
-hostname=$(hostname)
+(( $# == 0 )) && usage
 
-case "$#" in
-  1)
-    message="${1}"
-    notify-send "${hostname}" "'${message}'"
-    ;;
+message="${1}"
+shift
 
-  2)
-    target_host="${1}"
-    message="${2}"
-    ssh "${target_host}" "notify-send '${hostname}' '${message}'"
-    ;;
+# Send locally if no hostnames are given
+(( $# == 0 )) && notify-send "$(hostname)" "${message}"
 
-  *)
-    usage
-esac
+# Send to remote hosts otherwise
+for host; do
+  ssh "${host}" "notify-send '${host}' '${message}'"
+done
