@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+#
+# TODO: Update this
+# write-playlists - DESCRIPTION
+#
+# SYNOPSIS
+#   write-playlists PARAMETER1
+#
+# DESCRIPTION
+#   TODO: Describe what the script does.
+#
+# EXAMPLES
+#   write-playlists ARG1  # Describe what this does
+#   write-playlists ARG2  # Describe what this does
+#
+# NOTE
+#   This script works, but is currently a work in progress
+#
+
+set -euo pipefail
+
+process_count=$(($(nproc) * 2))
+
+write-recent-playlist
+find "${HOME}/.config/cmus/playlists" -type f -print0 | xargs -0 -P "${process_count}" -n1 write-playlist

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+#
+# TODO: Update this
+# write-playlists - DESCRIPTION
+#
+# SYNOPSIS
+#   write-playlists PARAMETER1
+#
+# DESCRIPTION
+#   TODO: Describe what the script does.
+#
+# EXAMPLES
+#   write-playlists ARG1  # Describe what this does
+#   write-playlists ARG2  # Describe what this does
+#
+# NOTE
+#   This script works, but is currently a work in progress
+#
+
+set -euo pipefail
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"${HOME}/.config"}
+CMUS_PLAYLIST_DIR="${XDG_CONFIG_HOME}/cmus/playlists"
+MUSIC_DIR="${HOME}/Archive/Music" # Where the playlist will be written
+
+usage() {
+  local script_name="$(basename $0)"
+  echo_notify "${script_name} - Sends a desktop notification, on the local machine, or to one or more remote hosts"
+  echo "  Usage: "
+  echo "    ${script_name} MESSAGE                          # Send a desktop notification on the local host"
+  echo "    ${script_name} MESSAGE HOSTNAME                 # Send a desktop notification to another host"
+  echo "    ${script_name} MESSAGE E1 HOSTNAME2 ...  # Send a desktop notification to multiple hosts"
+  exit 1
+}
+
+(( $# == 0 )) && usage
+
+cmus_playlist_file="${1}"
+playlist_name=$(basename "${cmus_playlist_file}")
+target_playlist_file="${MUSIC_DIR}/${playlist_name}.m3u"
+
+if sed 's|/home/debajit/Archive/Music|.|; s|/home/debajit/MusicOnExternalDrive|.|; s|/run/media/debajit/Boho 2TB/Debajit/Music/iTunes/iTunes Media/Music|.|' "${cmus_playlist_file}" > "${target_playlist_file}"; then
+  echo_notify "Successfully wrote playlist “${target_playlist_file}”"
+else
+  echo_error "Failed to write playlist “${target_playlist_file}”"
+fi
