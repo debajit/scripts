@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 #
-# backup - Backs up important files that are generally not in git, git annex, or a BtrFS snapshot.
+# borg-backup - Backs up important files that are generally not in git, git annex, or a BtrFS snapshot.
 #
 # SYNOPSIS
-#   backup
+#   borg-backup
 #
 # DESCRIPTION
 #   Uses borg to backup a variety of important files. These are mostly
