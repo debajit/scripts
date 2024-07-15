@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
 #
-# TODO: Update this
-# write-playlists - DESCRIPTION
+# write-playlists - Generates .m3u playlists from all cmus’ playlists
 #
 # SYNOPSIS
-#   write-playlists PARAMETER1
+#   write-playlists
 #
 # DESCRIPTION
-#   TODO: Describe what the script does.
+#   Takes all the cmus playlists and converts them into .m3u
+#   playlists. Does this concurrently using CORES*2 processes.
 #
-# EXAMPLES
-#   write-playlists ARG1  # Describe what this does
-#   write-playlists ARG2  # Describe what this does
+# NOTES on performance
 #
-# NOTE
-#   This script works, but is currently a work in progress
+# - xargs takes 0.244s
+# - GNU parallel takes 0.6s
+#
+# find "${HOME}/.config/cmus/playlists" -type f -print0 | parallel -0 -J "${process_count}" -N1 write-playlist
 #
 
 set -euo pipefail
