@@ -13,20 +13,54 @@
 #
 # EXAMPLES
 #   archive wiki
-#   => wiki--2020-07-13--12-34.tar.gz
+#   => wiki--2020-07-13--12-34.tar.xz
 #
 
 source "notification.sh"
 
-source_file="${1}"
-suffix="$(date "+--%Y-%m-%d--%H-%M")"
-target_file="${source_file}${suffix}.tar.xz"
+# Script to compress a file or directory to .tar.xz with maximum extreme compression
+# Usage: ./archive <file_or_directory_path>
 
-if [[ ! -e "${source_file}" ]]; then
-  echo_error "Could not find file or directory '${source_file}'"
-  exit 1
-fi
+usage() {
+    echo "Usage: $0 <file_or_directory_path>"
+    echo "Example: $0 /path/to/mydir"
+    echo "Example: $0 /path/to/myfile.txt"
+    echo ""
+    echo "Output will be named: <name>--YYYY-MM-DD--HH-MM.tar.xz"
+    exit 1
+}
 
-source_file_type="$(file --brief -- "${source_file}")"
-echo_notify "Archiving $source_file_type '$source_file' into '${target_file}'"
-apack -v "${target_file}" "${source_file}"
+die() {
+    echo "Error: $1"
+    exit 1
+}
+
+# Check if argument is provided
+[[ $# == 1 ]] || usage
+
+TARGET_PATH="$1"
+
+# Check if file or directory exists
+[[ -e "$TARGET_PATH" ]] || die "File or directory '$TARGET_PATH' does not exist"
+
+# Get the base name and generate timestamp
+BASE_NAME=$(basename "$TARGET_PATH")
+TIMESTAMP=$(date +"%Y-%m-%d--%H-%M")
+OUTPUT_NAME="${BASE_NAME}--${TIMESTAMP}.tar.xz"
+
+echo "Compressing '$TARGET_PATH' to '$OUTPUT_NAME' with maximum extreme compression..."
+echo "This may take a while depending on the size..."
+
+# Create tar.xz archive with maximum extreme compression
+# -c: create archive
+# -J: use xz compression
+# -f: specify filename
+# -C: change to parent directory
+# XZ_OPT: maximum extreme compression with all threads
+XZ_OPT="-9e --threads=0" tar -cJf "$OUTPUT_NAME" -C "$(dirname "$TARGET_PATH")" "$(basename "$TARGET_PATH")"
+
+[[ $? == 0 ]] || die "Failed to create archive"
+
+echo "Successfully created: $OUTPUT_NAME"
+echo "Original: $TARGET_PATH"
+echo "Archive size: $(du -h "$OUTPUT_NAME" | cut -f1)"
