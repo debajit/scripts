@@ -30,5 +30,3 @@ if mountpoint -q "${MOUNTPOINT}" || ifuse --documents "com.leshko.flap" "${MOUNT
 else
   die "Failed to mount music app documents filesystem at “${MOUNTPOINT}”"
 fi
-
-time rsync -avhsWL --progress --no-perms --no-owner --no-group --exclude-from ~/.rsync-exclude.lst "${MUSIC_SOURCE_DIR}/" "${MUSIC_DEST_DIR}/" --delete -ni

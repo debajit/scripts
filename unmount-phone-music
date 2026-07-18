@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+#
+# unmount-phone-music - Unmounts the documents filesystem of the iPhone’s Flacbox app
+#
+# SYNOPSIS
+#   unmount-phone-music
+#
+# DESCRIPTION
+#   Unmounts the documents filesystem of the iPhone’s Flacbox app.
+#
+
+set -euo pipefail
+source "notification.sh"        # Provides echo_notify, echo_error
+MOUNTPOINT="${HOME}/Mounts/Flacbox"
+
+fusermount -u "${MOUNTPOINT}" || die "Failed to unmount “${MOUNTPOINT}”"
