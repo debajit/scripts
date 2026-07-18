@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#
+# copy-tags - Copy all tags from one FLAC file to another.
+#
+# Usage: copy-tags <source-file> <target-file>
+#
+# Copies every Vorbis comment (title, album, artist, ...) and all
+# embedded pictures from the source FLAC to the target FLAC. Existing
+# tags and pictures on the target are removed first, so the target ends
+# up with exactly the metadata of the source.
+
+set -euo pipefail
+
+prog=$(basename "$0")
+
+die() {
+	echo "$prog: $*" >&2
+	exit 1
+}
+
+if (( $# != 2 )); then
+	echo "Usage: $prog <source-file> <target-file>" >&2
+	exit 2
+fi
+
+src=$1
+target=$2
+
+command -v metaflac >/dev/null 2>&1 || die "metaflac not found (install the 'flac' package)"
+
+[[ -f $src ]]    || die "source file not found: $src"
+[[ -f $target ]] || die "target file not found: $target"
+
+# Strip any existing pictures from the target first. This is done before
+# importing the tags because metaflac (1.5.0) prints a spurious
+# "writing FLAC file" error and exits non-zero when rewriting tags on a
+# file that still carries a PICTURE block.
+metaflac --remove --block-type=PICTURE --dont-use-padding "$target"
+
+# Copy the Vorbis comments (title, album, artist, and every other tag).
+metaflac --export-tags-to=- "$src" \
+	| metaflac --remove-all-tags --import-tags-from=- "$target"
+
+# Copy every embedded picture from the source to the target.
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+pic_blocks=$(metaflac --list --block-type=PICTURE "$src" 2>/dev/null \
+	| awk '/METADATA block #/ {sub(/.*#/, ""); print}')
+
+for block in $pic_blocks; do
+	pic="$tmpdir/pic.$block"
+	if metaflac --block-number="$block" --export-picture-to="$pic" "$src" 2>/dev/null; then
+		metaflac --import-picture-from="$pic" "$target"
+	fi
+done
+
+echo "$prog: copied tags from '$src' to '$target'"
