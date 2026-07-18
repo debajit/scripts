@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+#
+# trim-silence — losslessly trim leading and trailing silence from audio.
+#
+# Uses SoX to cut the quiet samples off both ends of a file. For WAV, the
+# audio is uncompressed PCM, so only samples are copied — nothing is
+# re-encoded, resampled or dithered — and the result is bit-for-bit
+# identical to the original minus the trimmed silence. For FLAC, SoX
+# decodes and re-encodes (FLAC's own codec is lossless, so this costs
+# nothing perceptually or bit-depth-wise), and tags are preserved. Either
+# way, the script proves the trim was sample-exact by confirming the
+# retained audio decodes to an identical byte-slice of the original.
+#
+# Currently supports: WAV (PCM), FLAC. Other formats can be added later.
+#
+# Usage:
+#   trim-silence [options] FILE...
+#
+# Options:
+#   -o, --output-dir DIR   Write trimmed files into DIR.
+#                          (default: a "trimmed/" subfolder beside each input)
+#       --in-place         Overwrite the original files instead.
+#   -t, --threshold PCT    Silence threshold, e.g. 0.5% (lower = quieter
+#                          sounds count as silence).            (default: 0.5%)
+#   -d, --duration SEC     Sound must stay above the threshold this long
+#                          before trimming stops.               (default: 0.1)
+#       --no-verify        Skip the lossless bit-exact verification.
+#   -h, --help             Show this help.
+#
+# Examples:
+#   trim-silence track.wav
+#   trim-silence -o ~/clean *.wav
+#   trim-silence --in-place "01 Song.wav"
+#
+
+set -euo pipefail
+
+# --- pretty output -----------------------------------------------------------
+
+if [[ -t 1 ]]; then
+  BOLD=$'\033[1m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'
+  RED=$'\033[31m'; DIM=$'\033[2m'; RESET=$'\033[0m'
+else
+  BOLD=''; GREEN=''; YELLOW=''; RED=''; DIM=''; RESET=''
+fi
+
+info()  { printf '%s\n' "$*"; }
+warn()  { printf '%s%s%s\n' "$YELLOW" "$*" "$RESET" >&2; }
+die()   { printf '%serror:%s %s\n' "$RED" "$RESET" "$*" >&2; exit 1; }
+
+# Print the leading comment block (the lines after the shebang, up to the
+# first blank/non-comment line) as help text, stripping the "# " prefix.
+usage() {
+  awk 'NR>1 { if (!/^#/) exit; sub(/^# ?/, ""); print }' "$0"
+  exit "${1:-0}"
+}
+
+# --- dependencies ------------------------------------------------------------
+
+command -v sox  >/dev/null 2>&1 || die "SoX is required (install 'sox')."
+command -v soxi >/dev/null 2>&1 || die "soxi is required (ships with 'sox')."
+
+HAVE_PYTHON=1
+command -v python3 >/dev/null 2>&1 || HAVE_PYTHON=0
+
+# --- options -----------------------------------------------------------------
+
+OUTPUT_DIR=""
+IN_PLACE=0
+THRESHOLD="0.5%"
+DURATION="0.1"
+VERIFY=1
+FILES=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o|--output-dir) OUTPUT_DIR="${2:-}"; shift 2 ;;
+    --in-place)      IN_PLACE=1; shift ;;
+    -t|--threshold)  THRESHOLD="${2:-}"; shift 2 ;;
+    -d|--duration)   DURATION="${2:-}"; shift 2 ;;
+    --no-verify)     VERIFY=0; shift ;;
+    -h|--help)       usage 0 ;;
+    --)              shift; while [[ $# -gt 0 ]]; do FILES+=("$1"); shift; done ;;
+    -*)              die "unknown option: $1 (try --help)" ;;
+    *)               FILES+=("$1"); shift ;;
+  esac
+done
+
+[[ ${#FILES[@]} -gt 0 ]] || usage 1
+if [[ -n "$OUTPUT_DIR" && $IN_PLACE -eq 1 ]]; then
+  die "--output-dir and --in-place are mutually exclusive."
+fi
+
+# --- helpers -----------------------------------------------------------------
+
+# Total bytes per second of PCM audio: rate * channels * (bits / 8).
+bytes_per_sec() {
+  local f="$1" rate ch bits
+  rate=$(soxi -r "$f"); ch=$(soxi -c "$f"); bits=$(soxi -b "$f")
+  echo $(( rate * ch * bits / 8 ))
+}
+
+# Human-friendly seconds, e.g. 13.764 -> "13.764s".
+secs() { printf '%.3fs' "$1"; }
+
+# Confirm the trimmed file is a bit-exact contiguous slice of the original.
+# Prints "<leading_bytes> <trailing_bytes>" on success; returns non-zero
+# (with a reason on stderr) if the samples were altered in any way.
+verify_lossless() {
+  local orig="$1" trimmed="$2" work raw_o raw_t out
+  [[ $HAVE_PYTHON -eq 1 ]] || { warn "python3 not found — skipping bit-exact check."; return 2; }
+
+  work="$(mktemp -d)"; raw_o="$work/orig.raw"; raw_t="$work/trim.raw"
+  # Decode both to raw PCM in their native encoding so the bytes are
+  # directly comparable.
+  sox "$orig"    -t raw "$raw_o"
+  sox "$trimmed" -t raw "$raw_t"
+
+  out=$(python3 - "$raw_o" "$raw_t" <<'PY'
+import sys
+orig = open(sys.argv[1], 'rb').read()
+trim = open(sys.argv[2], 'rb').read()
+i = orig.find(trim)
+if i < 0:
+    sys.exit(3)
+print(i, len(orig) - i - len(trim))
+PY
+  ) || { rm -rf "$work"; return 3; }
+
+  rm -rf "$work"
+  printf '%s\n' "$out"
+}
+
+trim_one() {
+  local input="$1"
+  [[ -f "$input" ]] || { warn "skipping (not a file): $input"; return 1; }
+
+  local ext="${input##*.}" ext_lc
+  ext_lc="${ext,,}"
+  case "$ext_lc" in
+    wav|flac) ;;
+    m4a|mp3|ogg|opus|aiff|aif)
+      warn "skipping '$input' — only WAV and FLAC are supported for now (${ext} support is planned)."
+      return 1 ;;
+    *)
+      warn "skipping '$input' — unrecognized extension '.$ext'."
+      return 1 ;;
+  esac
+
+  # Resolve the output path.
+  local dir base output tmp_out
+  dir="$(dirname -- "$input")"
+  base="$(basename -- "$input")"
+  if [[ $IN_PLACE -eq 1 ]]; then
+    output="$input"
+  elif [[ -n "$OUTPUT_DIR" ]]; then
+    mkdir -p -- "$OUTPUT_DIR"
+    output="$OUTPUT_DIR/$base"
+  else
+    mkdir -p -- "$dir/trimmed"
+    output="$dir/trimmed/$base"
+  fi
+
+  if [[ "$(readlink -f -- "$output" 2>/dev/null || echo "$output")" \
+        != "$(readlink -f -- "$input")" && -e "$output" ]]; then
+    warn "skipping '$input' — output already exists: $output"
+    return 1
+  fi
+
+  info "${BOLD}${base}${RESET}"
+
+  # SoX can't read and write the same file at once, so always go via a temp.
+  # The suffix must match the source format so SoX writes the same codec
+  # (e.g. .flac, not .wav) rather than guessing from the extension.
+  tmp_out="$(mktemp --suffix=".$ext_lc")"
+  # Trim leading silence, reverse, trim the (now leading) original tail,
+  # reverse back. This only touches the two ends, never silence in between.
+  sox "$input" "$tmp_out" \
+    silence 1 "$DURATION" "$THRESHOLD" reverse \
+    silence 1 "$DURATION" "$THRESHOLD" reverse
+
+  local orig_dur new_dur
+  orig_dur=$(soxi -D "$input")
+  new_dur=$(soxi -D "$tmp_out")
+
+  # Verify before we move anything into place.
+  local lossless="?" lead_s="" trail_s=""
+  if [[ $VERIFY -eq 1 ]]; then
+    local bps result lead_b trail_b
+    bps=$(bytes_per_sec "$input")
+    if result=$(verify_lossless "$input" "$tmp_out"); then
+      read -r lead_b trail_b <<<"$result"
+      lead_s=$(awk -v b="$lead_b"  -v r="$bps" 'BEGIN{printf "%.3f", b/r}')
+      trail_s=$(awk -v b="$trail_b" -v r="$bps" 'BEGIN{printf "%.3f", b/r}')
+      lossless="yes"
+    elif [[ $? -eq 2 ]]; then
+      lossless="unchecked"
+    else
+      lossless="no"
+    fi
+  fi
+
+  if [[ "$lossless" == "no" ]]; then
+    rm -f "$tmp_out"
+    die "verification FAILED for '$input' — output is not a bit-exact slice; left original untouched."
+  fi
+
+  mv -f "$tmp_out" "$output"
+
+  # Report.
+  local removed
+  removed=$(awk -v a="$orig_dur" -v b="$new_dur" 'BEGIN{printf "%.3f", a-b}')
+  info "  ${DIM}duration${RESET}  $(secs "$orig_dur") -> $(secs "$new_dur")  ${DIM}(removed $(secs "$removed"))${RESET}"
+  if [[ -n "$lead_s" ]]; then
+    info "  ${DIM}trimmed ${RESET} $(secs "$lead_s") from start, $(secs "$trail_s") from end"
+  fi
+  case "$lossless" in
+    yes)       info "  ${GREEN}✓ fully lossless${RESET} — every retained sample is bit-for-bit identical to the original" ;;
+    unchecked) info "  ${YELLOW}• lossless trim, but bit-exact check was skipped${RESET}" ;;
+  esac
+  info "  ${DIM}->${RESET} $output"
+  info ""
+}
+
+# --- run ---------------------------------------------------------------------
+
+rc=0
+for f in "${FILES[@]}"; do
+  trim_one "$f" || rc=1
+done
+exit "$rc"
