@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+#
+# open-bookmark - Opens URLs stored in bookmark files.
+#
+# SYNOPSIS
+#   open-bookmark FILE.bookmark [FILE2.bookmark] ...
+#
+# DESCRIPTION
+#   Reads the URL from the first line of each bookmark and opens it with the
+#   platform URL handler: open on macOS or xdg-open on Linux.
+#
+
+set -euo pipefail
+
+usage() {
+    echo "Usage: open-bookmark FILE.bookmark [FILE2.bookmark] ..." >&2
+}
+
+if (( $# == 0 )); then
+    usage
+    exit 2
+fi
+
+case $(uname -s) in
+    Darwin)
+        opener=open
+        ;;
+    Linux)
+        opener=xdg-open
+        ;;
+    *)
+        echo "open-bookmark: unsupported operating system: $(uname -s)" >&2
+        exit 1
+        ;;
+esac
+
+if ! command -v "$opener" >/dev/null 2>&1; then
+    echo "open-bookmark: '$opener' is not available in PATH" >&2
+    exit 1
+fi
+
+for bookmark in "$@"; do
+    if [[ ! -f $bookmark ]]; then
+        echo "open-bookmark: not a file: '$bookmark'" >&2
+        exit 1
+    fi
+
+    IFS= read -r url < "$bookmark" || true
+    url=${url%$'\r'}
+
+    if [[ -z $url ]]; then
+        echo "open-bookmark: empty bookmark: '$bookmark'" >&2
+        exit 1
+    fi
+
+    "$opener" "$url"
+done

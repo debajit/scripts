@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+#
+# bm - Creates a .bookmark file in the current directory.
+#
+# SYNOPSIS
+#   bm URL TITLE...
+#
+# EXAMPLE
+#
+#   bm https://standardebooks.org/ standard ebooks
+#
+#     This creates the file ‘Standard Ebooks.bookmark’ with the contents:
+#     https://standardebooks.org/
+#
+# DESCRIPTION
+#
+#   Converts TITLE to title case and creates "<Title>.bookmark"
+#   containing URL as its only line. Refuses to overwrite an existing
+#   bookmark and requires the titlecase command to be available in
+#   PATH.
+#
+#   These .bookmark files can be used to build a quickly searchable
+#   and navigable bookmark collection, e.g. using yazi and/or fzf.
+#   Bookmark tags are not required since a nested directory structure
+#   can help with organization.
+#
+
+set -euo pipefail
+
+usage() {
+    echo "Usage: bm URL TITLE..." >&2
+}
+
+if (( $# < 2 )); then
+    usage
+    exit 2
+fi
+
+if ! command -v titlecase >/dev/null 2>&1; then
+    echo "bm: titlecase is not available in PATH" >&2
+    exit 1
+fi
+
+url=$1
+shift
+
+title=$(printf '%s\n' "$*" | titlecase)
+filename="${title}.bookmark"
+
+if [[ -e $filename ]]; then
+    echo "bm: refusing to overwrite '$filename'" >&2
+    exit 1
+fi
+
+printf '%s\n' "$url" > "$filename"
+printf "Created '%s'\n" "$filename"
