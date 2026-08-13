@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+#
+# copy-bookmark - Copies a bookmark URL as a rich-text hyperlink.
+#
+# SYNOPSIS
+#   copy-bookmark FILE.bookmark
+#
+# DESCRIPTION
+#   Reads the URL from a bookmark file and copies it to the macOS clipboard as
+#   a clickable hyperlink labeled with the filename minus its .bookmark suffix.
+#
+
+set -euo pipefail
+
+usage() {
+    printf 'Usage: %s FILE.bookmark\n' "${0##*/}" >&2
+    exit 2
+}
+
+(( $# == 1 )) || usage
+
+bookmark=$1
+
+if [[ ! -f $bookmark ]]; then
+    printf '%s: not a file: %s\n' "${0##*/}" "$bookmark" >&2
+    exit 1
+fi
+
+filename=${bookmark##*/}
+if [[ $filename != *.bookmark ]]; then
+    printf '%s: expected a .bookmark file: %s\n' "${0##*/}" "$bookmark" >&2
+    exit 1
+fi
+
+label=${filename%.bookmark}
+url=$(<"$bookmark")
+url=${url%$'\r'}
+
+if [[ -z $url ]]; then
+    printf '%s: bookmark is empty: %s\n' "${0##*/}" "$bookmark" >&2
+    exit 1
+fi
+
+if [[ $url == *$'\n'* || $url == *$'\r'* ]]; then
+    printf '%s: bookmark must contain exactly one URL: %s\n' "${0##*/}" "$bookmark" >&2
+    exit 1
+fi
+
+if [[ $OSTYPE != darwin* ]] || ! command -v osascript >/dev/null 2>&1; then
+    printf '%s: rich clipboard copying requires macOS and osascript\n' "${0##*/}" >&2
+    exit 1
+fi
+
+osascript -l JavaScript \
+    -e 'ObjC.import("AppKit")' \
+    -e 'ObjC.import("Foundation")' \
+    -e 'function escapeHTML(value) {' \
+    -e '    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");' \
+    -e '}' \
+    -e 'function run(argv) {' \
+    -e '    var url = argv[0];' \
+    -e '    var label = argv[1];' \
+    -e '    var html = "<a href=\"" + escapeHTML(url) + "\">" + escapeHTML(label) + "</a>";' \
+    -e '    var pasteboard = $.NSPasteboard.generalPasteboard;' \
+    -e '    pasteboard.clearContents;' \
+    -e '    pasteboard.setDataForType($(html).dataUsingEncoding($.NSUTF8StringEncoding), $("public.html"));' \
+    -e '    pasteboard.setStringForType($(label), $("public.utf8-plain-text"));' \
+    -e '}' \
+    "$url" "$label"
+
+printf 'Copied hyperlink: %s <%s>\n' "$label" "$url"
