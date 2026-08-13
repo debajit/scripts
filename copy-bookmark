@@ -7,8 +7,16 @@
 #   copy-bookmark FILE.bookmark
 #
 # DESCRIPTION
-#   Reads the URL from a bookmark file and copies it to the macOS clipboard as
-#   a clickable hyperlink labeled with the filename minus its .bookmark suffix.
+#   Reads the URL from a bookmark file and copies it to the clipboard as a
+#   clickable hyperlink labeled with the filename minus its .bookmark suffix.
+#
+#   On macOS the clipboard carries two flavors: the hyperlink as HTML, and the
+#   bare label as plain text.
+#
+#   On Linux the hyperlink is copied as HTML via wl-copy (Wayland) or xclip
+#   (X11). Neither tool can serve a different payload per flavor, so an app
+#   that only accepts plain text will paste the raw <a href="...">...</a>
+#   markup rather than the label.
 #
 
 set -euo pipefail
@@ -47,26 +55,68 @@ if [[ $url == *$'\n'* || $url == *$'\r'* ]]; then
     exit 1
 fi
 
-if [[ $OSTYPE != darwin* ]] || ! command -v osascript >/dev/null 2>&1; then
-    printf '%s: rich clipboard copying requires macOS and osascript\n' "${0##*/}" >&2
-    exit 1
-fi
+# Sets $escaped rather than printing, so that callers need no subshell.
+# The backslashes matter: since bash 5.2 an unescaped & in the replacement
+# stands for the matched text.
+escape_html() {
+    escaped=$1
+    escaped=${escaped//&/\&amp;}
+    escaped=${escaped//</\&lt;}
+    escaped=${escaped//>/\&gt;}
+    escaped=${escaped//\"/\&quot;}
+}
 
-osascript -l JavaScript \
-    -e 'ObjC.import("AppKit")' \
-    -e 'ObjC.import("Foundation")' \
-    -e 'function escapeHTML(value) {' \
-    -e '    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");' \
-    -e '}' \
-    -e 'function run(argv) {' \
-    -e '    var url = argv[0];' \
-    -e '    var label = argv[1];' \
-    -e '    var html = "<a href=\"" + escapeHTML(url) + "\">" + escapeHTML(label) + "</a>";' \
-    -e '    var pasteboard = $.NSPasteboard.generalPasteboard;' \
-    -e '    pasteboard.clearContents;' \
-    -e '    pasteboard.setDataForType($(html).dataUsingEncoding($.NSUTF8StringEncoding), $("public.html"));' \
-    -e '    pasteboard.setStringForType($(label), $("public.utf8-plain-text"));' \
-    -e '}' \
-    "$url" "$label"
+escape_html "$url"
+escaped_url=$escaped
+escape_html "$label"
+
+html="<a href=\"$escaped_url\">$escaped</a>"
+
+# Puts $html on the clipboard as text/html, and $label as plain text.
+# shellcheck disable=SC2016  # $(...) below is JXA's ObjC bridge, not a subshell
+copy_macos() {
+    if ! command -v osascript >/dev/null 2>&1; then
+        printf '%s: osascript is not available in PATH\n' "${0##*/}" >&2
+        exit 1
+    fi
+
+    osascript -l JavaScript \
+        -e 'ObjC.import("AppKit")' \
+        -e 'ObjC.import("Foundation")' \
+        -e 'function run(argv) {' \
+        -e '    var pasteboard = $.NSPasteboard.generalPasteboard;' \
+        -e '    pasteboard.clearContents;' \
+        -e '    pasteboard.setDataForType($(argv[0]).dataUsingEncoding($.NSUTF8StringEncoding), $("public.html"));' \
+        -e '    pasteboard.setStringForType($(argv[1]), $("public.utf8-plain-text"));' \
+        -e '}' \
+        "$html" "$label"
+}
+
+# Puts $html on the clipboard as text/html. Both wl-copy and xclip serve a
+# single payload, so plain-text-only apps receive the markup.
+copy_linux() {
+    if [[ -n ${WAYLAND_DISPLAY:-} ]] && command -v wl-copy >/dev/null 2>&1; then
+        printf '%s' "$html" | wl-copy --type text/html
+    elif [[ -n ${DISPLAY:-} ]] && command -v xclip >/dev/null 2>&1; then
+        printf '%s' "$html" | xclip -selection clipboard -t text/html
+    else
+        printf '%s: no usable clipboard tool found. Install wl-clipboard for a\n' "${0##*/}" >&2
+        printf '%s: Wayland session, or xclip for an X11 one.\n' "${0##*/}" >&2
+        exit 1
+    fi
+}
+
+case $OSTYPE in
+    darwin*)
+        copy_macos
+        ;;
+    linux*)
+        copy_linux
+        ;;
+    *)
+        printf '%s: unsupported operating system type: %s\n' "${0##*/}" "$OSTYPE" >&2
+        exit 1
+        ;;
+esac
 
 printf 'Copied hyperlink: %s <%s>\n' "$label" "$url"
