@@ -26,34 +26,32 @@ usage() {
     exit 2
 }
 
+# Prints each argument as its own script-prefixed line on stderr, then exits.
+die() {
+    local message
+    for message in "$@"; do
+        printf '%s: %s\n' "${0##*/}" "$message" >&2
+    done
+    exit 1
+}
+
 (( $# == 1 )) || usage
 
 bookmark=$1
 
-if [[ ! -f $bookmark ]]; then
-    printf '%s: not a file: %s\n' "${0##*/}" "$bookmark" >&2
-    exit 1
-fi
+[[ -f $bookmark ]] || die "not a file: $bookmark"
 
 filename=${bookmark##*/}
-if [[ $filename != *.bookmark ]]; then
-    printf '%s: expected a .bookmark file: %s\n' "${0##*/}" "$bookmark" >&2
-    exit 1
-fi
+[[ $filename == *.bookmark ]] || die "expected a .bookmark file: $bookmark"
 
 label=${filename%.bookmark}
 url=$(<"$bookmark")
 url=${url%$'\r'}
 
-if [[ -z $url ]]; then
-    printf '%s: bookmark is empty: %s\n' "${0##*/}" "$bookmark" >&2
-    exit 1
-fi
+[[ -n $url ]] || die "bookmark is empty: $bookmark"
 
-if [[ $url == *$'\n'* || $url == *$'\r'* ]]; then
-    printf '%s: bookmark must contain exactly one URL: %s\n' "${0##*/}" "$bookmark" >&2
-    exit 1
-fi
+[[ $url != *$'\n'* && $url != *$'\r'* ]] ||
+    die "bookmark must contain exactly one URL: $bookmark"
 
 # Sets $escaped rather than printing, so that callers need no subshell.
 # The backslashes matter: since bash 5.2 an unescaped & in the replacement
@@ -75,10 +73,8 @@ html="<a href=\"$escaped_url\">$escaped</a>"
 # Puts $html on the clipboard as text/html, and $label as plain text.
 # shellcheck disable=SC2016  # $(...) below is JXA's ObjC bridge, not a subshell
 copy_macos() {
-    if ! command -v osascript >/dev/null 2>&1; then
-        printf '%s: osascript is not available in PATH\n' "${0##*/}" >&2
-        exit 1
-    fi
+    command -v osascript >/dev/null 2>&1 ||
+        die 'osascript is not available in PATH'
 
     osascript -l JavaScript \
         -e 'ObjC.import("AppKit")' \
@@ -100,9 +96,8 @@ copy_linux() {
     elif [[ -n ${DISPLAY:-} ]] && command -v xclip >/dev/null 2>&1; then
         printf '%s' "$html" | xclip -selection clipboard -t text/html
     else
-        printf '%s: no usable clipboard tool found. Install wl-clipboard for a\n' "${0##*/}" >&2
-        printf '%s: Wayland session, or xclip for an X11 one.\n' "${0##*/}" >&2
-        exit 1
+        die 'no usable clipboard tool found. Install wl-clipboard for a' \
+            'Wayland session, or xclip for an X11 one.'
     fi
 }
 
@@ -114,8 +109,7 @@ case $OSTYPE in
         copy_linux
         ;;
     *)
-        printf '%s: unsupported operating system type: %s\n' "${0##*/}" "$OSTYPE" >&2
-        exit 1
+        die "unsupported operating system type: $OSTYPE"
         ;;
 esac
 
