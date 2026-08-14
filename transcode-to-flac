@@ -22,6 +22,19 @@ set -euo pipefail
 
 source "notification.sh"        # Provides echo_notify, echo_error
 
+readonly script_name=${0##*/}
+
+# The redirection on a function definition applies to every call of it, so
+# the printf below needs no >&2 of its own.
+usage() {
+  printf 'Usage: %s FILE...\n' "$script_name"
+  exit 2
+} >&2
+
+# Without arguments the loop below has nothing to iterate over and the
+# script exits 0 silently, which is indistinguishable from success.
+(( $# > 0 )) || usage
+
 declare -A convertible_extensions=(alac alac m4a m4a wav wav)
 
 for input_file in "$@"; do
