@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+#
+# transcode-to-flac - Converts the given (lossless) audio file(s) to FLAC
+#
+# SYNOPSIS
+#   transcode-to-flac FILE
+#   transcode-to-flac FILE1 FILE2
+#   transcode-to-flac *
+#
+# DESCRIPTION
+#   Converts the given files (e.g. ALAC) to FLAC. The output files
+#   generated will have the extension *.flac. Existing *.flac files
+#   will be ignored and not reconverted.
+#
+# EXAMPLES
+#   transcode-to-flac input.m4a      # Creates input.flac
+#   transcode-to-flac *              # Converts all the readable files in the directory to FLAC
+#
+
+set -euo pipefail
+
+source "notification.sh"        # Provides echo_notify, echo_error
+
+declare -A convertible_extensions=(alac alac m4a m4a wav wav)
+
+for input_file in "$@"; do
+  # If the input file has an extension we cannot convert, ignore it
+  input_file_extension="${input_file##*.}"
+  if [[ ! -v convertible_extensions[$input_file_extension] ]]; then
+    continue
+  fi
+
+  # We can convert this file.
+  # Check if its corresponding FLAC file already exists. If so, ignore it.
+  output_file="${input_file%%.*}.flac" # Remove extension and add .flac
+  if [[ -s "${output_file}" ]]; then
+    echo "   Skipping file '${input_file}'. Matching FLAC file found."
+    continue
+  fi
+
+  # No FLAC file exists. Let’s transcode it to FLAC.
+  if gum spin --spinner points --title "Converting '${input_file}' to FLAC…" --title.bold --title.foreground="#e0def4" -- ffmpeg -i "${input_file}" -acodec flac -vcodec copy "${output_file}"; then
+    echo_notify "Wrote '${output_file}'"
+  else
+    echo_error "Failed to write '${output_file}'"
+  fi
+done
