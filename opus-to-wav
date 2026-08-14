@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+#
+# opus-to-wav - Decodes an Opus file to WAV.
+#
+# SYNOPSIS
+#   opus-to-wav FILE.opus
+#
+# DESCRIPTION
+#   Decodes the given Opus file to a 24-bit WAV of the same name, in the
+#   same directory.
+#
+#   Opus is lossy, so nothing recovers what it discarded. But 24-bit
+#   integer samples sit well below its noise floor, and its native
+#   48 kHz rate is preserved rather than resampled, so the WAV loses
+#   nothing further.
+#
+
+set -euo pipefail
+
+readonly script_name=${0##*/}
+
+# The redirection on a function definition applies to every call of it, so
+# the printf below needs no >&2 of its own.
+usage() {
+    printf 'Usage: %s FILE.opus\n' "$script_name"
+    exit 2
+} >&2
+
+(( $# == 1 )) || usage
+
+input_file=$1
+# No validation of the input beyond this: ffmpeg has to open and parse
+# the file anyway, and it rejects directories, unreadable files etc.
+# with a clearer message than any check here could, without writing
+# output.
+
+# A single % strips the shortest match for ".*" from the end, i.e. just
+# the final extension, leaving any dots earlier in the name intact.
+output_file="${input_file%.*}.wav"
+
+# -y overwrites any existing output. Without it ffmpeg stops to ask, and
+# refusing exits 0, so the script would report success having done nothing.
+ffmpeg -y -i "$input_file" -c:a pcm_s24le "$output_file"
