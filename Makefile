@@ -53,8 +53,15 @@ all install: | $(TARGET)
 	$(STOW) -R $(PACKAGE)
 
 # Remove existing script symlinks and recreate them from this checkout.
+#
+# Match on '*/$(PACKAGE)/*' rather than a bare '*$(PACKAGE)*': the
+# sibling scripts-private repo installs into this same target, and a
+# substring match on "scripts" would also match its links and delete
+# them. Stow writes link targets like ../../src/setup/scripts/NAME, so
+# requiring the surrounding slashes pins the match to this package's own
+# directory component.
 reinstall: | $(TARGET)
-	find "$(TARGET)" -maxdepth 1 -type l -lname '*$(PACKAGE)*' -print -delete
+	find "$(TARGET)" -maxdepth 1 -type l -lname '*/$(PACKAGE)/*' -print -delete
 	$(MAKE) install
 
 uninstall:
