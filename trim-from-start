@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+#
+# trim-from-start - Losslessly trim a FLAC file so it starts at a fixed time.
+#
+# Usage: trim-from-start <file.flac> <mm:ss.mmm>
+#
+# Converts the given start time to an exact sample offset (using the
+# file's own sample rate) and cuts everything before it with sox. The
+# cut lands on a sample boundary with no resampling, dither or
+# requantization, so the kept audio is bit-for-bit identical to the
+# original from that point on.
+#
+# The result is written to a "trimmed/" directory next to the input
+# file, with the same basename. All Vorbis comments and embedded
+# pictures from the original are copied onto the new file.
+#
+# The minutes field may exceed 59 (e.g. "83:12.000" is fine), so there
+# is no need for an hours field for long mixes.
+#
+# Examples:
+#   trim-from-start track.flac 0:04.250
+#   trim-from-start "long mix.flac" 74:18.500
+#
+
+set -euo pipefail
+
+prog=$(basename "$0")
+script_dir=$(cd -- "$(dirname -- "$0")" && pwd)
+
+die() {
+    echo "$prog: $*" >&2
+    exit 1
+}
+
+if (( $# != 2 )); then
+    echo "Usage: $prog <file.flac> <mm:ss.mmm>" >&2
+    exit 2
+fi
+
+input=$1
+time_arg=$2
+
+command -v sox  >/dev/null 2>&1 || die "sox not found"
+command -v soxi >/dev/null 2>&1 || die "soxi not found"
+[[ -x "$script_dir/copy-tags" ]] || die "copy-tags not found next to this script"
+
+[[ -f $input ]] || die "file not found: $input"
+[[ ${input,,} == *.flac ]] || die "not a FLAC file: $input"
+
+# Parse mm:ss.mmm -> minutes and (fractional) seconds.
+if [[ $time_arg =~ ^([0-9]+):([0-5]?[0-9](\.[0-9]+)?)$ ]]; then
+    minutes=${BASH_REMATCH[1]}
+    seconds=${BASH_REMATCH[2]}
+else
+    die "time must be in mm:ss.mmm format (e.g. 01:23.456)"
+fi
+
+sample_rate=$(soxi -r "$input")
+total_samples=$(soxi -s "$input")
+
+# Exact sample offset for the requested start time.
+start_sample=$(awk -v m="$minutes" -v s="$seconds" -v sr="$sample_rate" \
+    'BEGIN { printf "%d", (m * 60 + s) * sr + 0.5 }')
+
+(( start_sample > 0 )) || die "start time resolves to sample 0; nothing to trim"
+(( start_sample < total_samples )) || die "start time is at or past the end of the file"
+
+out_dir=$(dirname -- "$input")/trimmed
+out_file=$out_dir/$(basename -- "$input")
+
+[[ -e $out_file ]] && die "output already exists: $out_file"
+
+mkdir -p -- "$out_dir"
+
+# -C 8 = maximum FLAC compression (quality-neutral). trim <n>s cuts at
+# the exact sample; sox keeps the input's rate and bit depth.
+sox "$input" -C 8 "$out_file" trim "${start_sample}s"
+
+# sox does not carry over Vorbis comments or pictures; copy them over.
+"$script_dir/copy-tags" "$input" "$out_file"
+
+printf '%s: wrote %s\n' "$prog" "$out_file"
+printf '  start: %s  (sample %d @ %d Hz)\n' "$time_arg" "$start_sample" "$sample_rate"
+printf '  new duration: %s\n' "$(soxi -d "$out_file")"
