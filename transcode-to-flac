@@ -1,61 +1,75 @@
 #!/usr/bin/env bash
 
 #
-# transcode-to-flac - Converts the given (lossless) audio file(s) to FLAC
+# transcode-to-flac - Converts lossless audio file(s) to FLAC.
 #
 # SYNOPSIS
-#   transcode-to-flac FILE
-#   transcode-to-flac FILE1 FILE2
-#   transcode-to-flac *
+#   transcode-to-flac FILE...
 #
 # DESCRIPTION
-#   Converts the given files (e.g. ALAC) to FLAC. The output files
-#   generated will have the extension *.flac. Existing *.flac files
-#   will be ignored and not reconverted.
+#   Converts the given lossless files (ALAC, WAV, AIFF…) to FLAC of the
+#   same name, in the same directory. Tags and embedded cover art are
+#   carried over.
+#
+#   ALAC and FLAC are different codecs, not merely different
+#   containers, so this is a genuine decode and re-encode rather than a
+#   remux. Both are exact codecs, so no audio is lost in the round trip.
+#
+#   That last claim is verified, not assumed. After writing each FLAC,
+#   the script decodes both the input and the output back to raw PCM
+#   and compares checksums; the audio must be bit-for-bit identical or
+#   the script fails. Both are decoded to one fixed sample format, so
+#   that the comparison is of the samples themselves rather than of
+#   whatever representation each decoder happens to return.
 #
 # EXAMPLES
-#   transcode-to-flac input.m4a      # Creates input.flac
-#   transcode-to-flac *              # Converts all the readable files in the directory to FLAC
+#   transcode-to-flac input.m4a      # Writes input.flac
+#   transcode-to-flac *.m4a          # Converts a whole album
 #
 
 set -euo pipefail
-
-source "notification.sh"        # Provides echo_notify, echo_error
 
 readonly script_name=${0##*/}
 
 # The redirection on a function definition applies to every call of it, so
 # the printf below needs no >&2 of its own.
 usage() {
-  printf 'Usage: %s FILE...\n' "$script_name"
-  exit 2
+    printf 'Usage: %s FILE...\n' "$script_name"
+    exit 2
 } >&2
 
-# Without arguments the loop below has nothing to iterate over and the
-# script exits 0 silently, which is indistinguishable from success.
 (( $# > 0 )) || usage
 
-declare -A convertible_extensions=(alac alac m4a m4a wav wav)
+# Decodes only the audio, to one fixed sample format, and prints its
+# checksum. pcm_s32le is wide enough to hold any input of 32 bits or
+# fewer without altering a sample, so widening to it is lossless and
+# the comparison stays exact whatever the source bit depth.
+audio_checksum() {
+    ffmpeg -v error -i "$1" -map 0:a -c:a pcm_s32le -f md5 -
+}
 
 for input_file in "$@"; do
-  # If the input file has an extension we cannot convert, ignore it
-  input_file_extension="${input_file##*.}"
-  if [[ ! -v convertible_extensions[$input_file_extension] ]]; then
-    continue
-  fi
+    # A single % strips the shortest match for ".*" from the end, i.e.
+    # just the final extension, leaving any dots earlier in the name
+    # intact.
+    output_file="${input_file%.*}.flac"
 
-  # We can convert this file.
-  # Check if its corresponding FLAC file already exists. If so, ignore it.
-  output_file="${input_file%%.*}.flac" # Remove extension and add .flac
-  if [[ -s "${output_file}" ]]; then
-    echo "   Skipping file '${input_file}'. Matching FLAC file found."
-    continue
-  fi
+    # -map 0 keeps every stream, so embedded cover art survives as a
+    # copied JPEG beside the re-encoded audio. -compression_level 8 is
+    # encode-time effort only and never affects the samples.
+    #
+    # -y overwrites any existing output. Without it ffmpeg stops to ask,
+    # and refusing exits 0, so the script would report success having
+    # done nothing.
+    ffmpeg -y -v error -i "$input_file" \
+           -map 0 -c:a flac -compression_level 8 -c:v copy \
+           "$output_file"
 
-  # No FLAC file exists. Let’s transcode it to FLAC.
-  if gum spin --spinner points --title "Converting '${input_file}' to FLAC…" --title.bold --title.foreground="#e0def4" -- ffmpeg -i "${input_file}" -acodec flac -vcodec copy "${output_file}"; then
-    echo_notify "Wrote '${output_file}'"
-  else
-    echo_error "Failed to write '${output_file}'"
-  fi
+    if [[ "$(audio_checksum "$input_file")" != "$(audio_checksum "$output_file")" ]]; then
+        printf '%s: %s is not bit-identical to %s\n' \
+               "$script_name" "$output_file" "$input_file" >&2
+        exit 1
+    fi
+
+    printf 'Wrote %s (verified bit-identical)\n' "$output_file"
 done
