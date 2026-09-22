@@ -1,0 +1,59 @@
+#!/usr/bin/env zsh
+
+#
+# transcode-to-flac-16-44 - Converts an audio file to 44.1 kHz 16-bit FLAC.
+#
+# SYNOPSIS
+#   transcode-to-flac-16-44 FILE
+#
+# DESCRIPTION
+#   Converts the given audio file (WAV, AIFF, MP3, M4A…, anything sox
+#   can read) to 44.1 kHz 16-bit FLAC of the same name, in the same
+#   directory. For a lossless conversion that keeps the source's bit
+#   depth and sample rate, use transcode-to-flac.
+#
+#   sox does the whole conversion: `rate -v` resamples at its very high
+#   quality setting, and `dither -s` reduces to 16 bits with
+#   noise-shaped dither, which moves the rounding noise to where hearing
+#   is least sensitive. Both do nothing when the audio is already at
+#   that rate and depth, so a 44.1 kHz 16-bit file passes through
+#   unchanged.
+#
+#   FLAC inputs are refused: the output would have the same name, and
+#   sox would overwrite the file while still reading it.
+#
+# EXAMPLES
+#   transcode-to-flac-16-44 input.wav              # Writes input.flac
+#   parallel transcode-to-flac-16-44 ::: *.wav     # Converts many, in parallel
+#   fd -e wav -x transcode-to-flac-16-44           # Converts all, recursively
+#
+
+# The zsh equivalents of bash's `set -euo pipefail`, plus extended_glob
+# for the case-insensitive (#i) match below.
+setopt err_exit no_unset pipe_fail extended_glob
+
+# :t is the "tail" of a path, i.e. its last component.
+readonly script_name=${0:t}
+
+usage() {
+    print "Usage: $script_name FILE" >&2
+    exit 2
+}
+
+(( $# == 1 )) || usage
+
+input_file=$1
+
+# A FLAC input would be overwritten by its own output. (#i) ignores case,
+# so .FLAC is refused too: on case-insensitive filesystems such as exFAT,
+# Song.FLAC and Song.flac are the same file.
+[[ $input_file != (#i)*.flac ]] || usage
+
+# :r is the "root" of a path, i.e. without its final extension.
+output_file=${input_file:r}.flac
+
+# -b 16 sets the output bit depth, which dither -s then reaches with
+# noise-shaped dither. -C 8 is FLAC's highest compression level:
+# encode-time effort only, never affecting the samples. sox overwrites
+# an existing output without asking.
+sox $input_file -b 16 -C 8 $output_file rate -v 44100 dither -s

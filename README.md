@@ -4,13 +4,15 @@ Utility shell scripts to solve various day-to-day problems.
 
 ## Music Management
 
-| Script          | Description                                                                                                              |
-|:----------------|:-------------------------------------------------------------------------------------------------------------------------|
-| convert-to-m4a  | Converts the given file to M4A (AAC) format using the Fraunhofer libfdk-aac library (via fdkaac)                         |
-| backup-artist   | Back up the given music artist directory to multiple cloud stores.                                                       |
-| sync-artist     | Syncs the artist directory from the local disk to the remote, deleting files from the remote if required.                |
-| backup-playlist | Converts a cmus playlist to m3u and backs it up to the cloud, so that other music players like CloudTunes can stream it. |
-| backup-cmus     | Back up the local cmus directory (playlists and library in text file format) to the cloud stores configured.             |
+| Script                  | Description                                                                                                                 |
+|:------------------------|:----------------------------------------------------------------------------------------------------------------------------|
+| convert-to-m4a          | Converts the given file to M4A (AAC) format using the Fraunhofer libfdk-aac library (via fdkaac)                            |
+| transcode-to-flac       | Converts lossless files (WAV, ALAC, AIFF…) to FLAC, keeping bit depth and sample rate; verifies the audio is bit-identical. |
+| transcode-to-flac-16-44 | Converts an audio file to 44.1 kHz 16-bit FLAC with high-quality resampling and noise-shaped dither (sox).                  |
+| backup-artist           | Back up the given music artist directory to multiple cloud stores.                                                          |
+| sync-artist             | Syncs the artist directory from the local disk to the remote, deleting files from the remote if required.                   |
+| backup-playlist         | Converts a cmus playlist to m3u and backs it up to the cloud, so that other music players like CloudTunes can stream it.    |
+| backup-cmus             | Back up the local cmus directory (playlists and library in text file format) to the cloud stores configured.                |
 
 ## Video
 
