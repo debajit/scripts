@@ -9,8 +9,9 @@
 # DESCRIPTION
 #   Converts the given audio file (WAV, AIFF, MP3, M4A…, anything sox
 #   can read) to 44.1 kHz 16-bit FLAC of the same name, in the same
-#   directory. For a lossless conversion that keeps the source's bit
-#   depth and sample rate, use transcode-to-flac.
+#   directory. Tags and embedded cover art are carried over. For a
+#   lossless conversion that keeps the source's bit depth and sample
+#   rate, use transcode-to-flac.
 #
 #   sox does the whole conversion: `rate -v` resamples at its very high
 #   quality setting, and `dither -s` reduces to 16 bits with
@@ -18,6 +19,10 @@
 #   is least sensitive. Both do nothing when the audio is already at
 #   that rate and depth, so a 44.1 kHz 16-bit file passes through
 #   unchanged.
+#
+#   sox drops embedded pictures, so it writes to a temporary file, and
+#   ffmpeg then copies that audio, the source's cover art and the
+#   source's tags into the final FLAC, without re-encoding any of them.
 #
 #   FLAC inputs are refused: the output would have the same name, and
 #   sox would overwrite the file while still reading it.
@@ -52,8 +57,23 @@ input_file=$1
 # :r is the "root" of a path, i.e. without its final extension.
 output_file=${input_file:r}.flac
 
+# The temporary file lives beside the output so that a full /tmp cannot
+# fail an otherwise fine conversion, and is removed however we exit.
+temp_file=$(mktemp --suffix=.flac -p ${input_file:h} .transcode-XXXXXX)
+trap 'rm -f $temp_file' EXIT
+
 # -b 16 sets the output bit depth, which dither -s then reaches with
 # noise-shaped dither. -C 8 is FLAC's highest compression level:
 # encode-time effort only, never affecting the samples. sox overwrites
-# an existing output without asking.
-sox $input_file -b 16 -C 8 $output_file rate -v 44100 dither -s
+# the (empty) temporary file without asking.
+sox $input_file -b 16 -C 8 $temp_file rate -v 44100 dither -s
+
+# Takes the audio from sox's output and any cover art from the source,
+# copying both as they are, along with the source's tags. The ? makes
+# the cover art optional, and is quoted so that zsh does not take it as
+# a glob. -y overwrites any existing output: without it ffmpeg stops to
+# ask, and refusing exits 0, so the script would report success having
+# done nothing.
+ffmpeg -y -v error -i $temp_file -i $input_file \
+       -map 0:a -map '1:v?' -map_metadata 1 -c copy \
+       $output_file
