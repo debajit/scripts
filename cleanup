@@ -1,7 +1,8 @@
 #!/bin/bash
 # Arch Linux safe cleanup script
-# Frees up disk space by cleaning package cache and removing orphans
+# Frees up disk space by cleaning package caches and removing orphans
 
+# Exit immediately if any command fails.
 set -e
 
 echo "Starting Arch Linux cleanup..."
@@ -9,19 +10,22 @@ echo "Starting Arch Linux cleanup..."
 # 1. Remove stale download directories
 #
 # pacman downloads packages into temporary directories under the cache
-# directory. An interrupted transaction leaves those behind, and every
-# later `pacman -Sc` run fails trying to read them as package files.
+# directory. An interrupted transaction leaves those behind, and later
+# cache cleaning trips over them when reading them as package files.
 echo "Removing stale download directories from cache..."
+# Look only at the top level of the cache (-maxdepth 1) for directories
+# named download-*, and delete them all in one rm call ({} +).
 sudo find /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec rm -rf {} +
 
-# 2. Remove unused package cache
-echo "Cleaning package cache (old versions)..."
-sudo pacman -Sc
-
-# 3. Remove unused dependencies (orphans)
+# 2. Remove unused dependencies (orphans)
+#
+# This runs before cache cleaning so that the cached packages of any
+# orphans removed here are cleaned up in the next step.
 echo "Checking for orphaned packages..."
-# pacman exits non-zero when there are no orphans, which set -e would
-# otherwise treat as a fatal error.
+# List (-Q) packages installed as dependencies (-d) that nothing
+# requires any more (-t), printing names only (-q). pacman exits
+# non-zero when there are no orphans, which set -e would otherwise
+# treat as a fatal error.
 orphans=$(pacman -Qdtq || true)
 
 if [ -n "$orphans" ]; then
@@ -29,6 +33,10 @@ if [ -n "$orphans" ]; then
     echo "$orphans"
     read -p "Do you want to remove these orphaned packages? [y/N]: " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        # Remove (-R) the orphans, skip saving .pacsave backups of
+        # their config files (-n), and also remove any dependencies
+        # that become unneeded as a result (-s). $orphans is left
+        # unquoted so each package name is passed as its own argument.
         sudo pacman -Rns $orphans
     else
         echo "Skipping orphan removal."
@@ -37,8 +45,70 @@ else
     echo "No orphaned packages found."
 fi
 
-# 4. Clear package manager lock and temporary files
-echo "Clearing temporary files..."
-sudo pacman -Scc --noconfirm
+# 3. Clean the pacman package cache
+#
+# Keep the two newest versions of each installed package so a broken
+# update can be rolled back with `pacman -U`, and drop every cached
+# version of packages that are no longer installed.
+if ! command -v paccache >/dev/null; then
+    echo "paccache not found; install pacman-contrib." >&2
+    exit 1
+fi
+echo "Cleaning pacman package cache..."
+# du -sh prints "<size>\t<path>"; cut -f1 keeps just the size.
+before=$(du -sh /var/cache/pacman/pkg 2>/dev/null | cut -f1)
+# Remove (-r) cached packages, keeping (-k) the 2 newest versions of
+# each package. Without -r, paccache only reports what it would remove.
+sudo paccache -rk2
+# Remove (-r) cached packages that are uninstalled (-u), keeping 0
+# versions (-k0), i.e. every cached copy of a removed package.
+sudo paccache -ruk0
+echo "pacman cache: $before -> $(du -sh /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
+
+# 4. Clean the paru AUR build cache
+#
+# paru keeps every downloaded source and every built package in each AUR
+# clone and never deletes them, so the cache grows by a full copy of
+# each package on every update. Delete clones of packages that are no
+# longer installed, and strip build artifacts from the rest while
+# keeping the git checkout so paru can still diff PKGBUILD updates.
+paru_clone="${XDG_CACHE_HOME:-$HOME/.cache}/paru/clone"
+if [ -d "$paru_clone" ]; then
+    echo "Cleaning paru AUR build cache..."
+    before=$(du -sh "$paru_clone" 2>/dev/null | cut -f1)
+    # List installed foreign packages (-m), i.e. ones not from the
+    # official repos, which is where AUR packages show up. As with -Qdtq,
+    # pacman exits non-zero when the list is empty.
+    installed=$(pacman -Qqm || true)
+    # The trailing / makes the glob match directories only.
+    for dir in "$paru_clone"/*/; do
+        # Strip the trailing / the glob left on the path.
+        dir=${dir%/}
+        # makepkg leaves pkg/ directories with mode 0111, which blocks
+        # deleting anything inside them.
+        chmod -R u+rwx "$dir/pkg" 2>/dev/null || true
+        # A split package's clone is named after its pkgbase, so match
+        # on every pkgname it builds. Fall back to the directory name
+        # if the clone has no .SRCINFO.
+        pkgnames=$(sed -n 's/^[[:space:]]*pkgname = //p' "$dir/.SRCINFO" 2>/dev/null)
+        [ -n "$pkgnames" ] || pkgnames=$(basename "$dir")
+        # True if any of this clone's package names is installed: each
+        # name is a fixed-string pattern (-F, from a file via -f) that
+        # must match a whole line (-x) of the installed list, quietly
+        # (-q).
+        if grep -qxFf <(echo "$pkgnames") <<< "$installed"; then
+            if [ -d "$dir/.git" ]; then
+                # Delete everything git doesn't track: untracked (-d
+                # includes directories) and ignored (-x) files, quietly
+                # (-q). -ff also removes nested git repos, such as the
+                # upstream source clones of -git packages.
+                git -C "$dir" clean -ffdxq
+            fi
+        else
+            rm -rf "$dir"
+        fi
+    done
+    echo "paru cache: $before -> $(du -sh "$paru_clone" 2>/dev/null | cut -f1)"
+fi
 
 echo "Cleanup complete!"
