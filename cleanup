@@ -1,28 +1,44 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# Arch Linux safe cleanup script
+# Frees up disk space by cleaning package cache and removing orphans
 
+set -e
+
+echo "Starting Arch Linux cleanup..."
+
+# 1. Remove stale download directories
 #
-# cleanup
-#
-# Cleans up disk space in Manjaro GNU/Linux by deleting unused files,
-# journals, packages and caches.
-#
+# pacman downloads packages into temporary directories under the cache
+# directory. An interrupted transaction leaves those behind, and every
+# later `pacman -Sc` run fails trying to read them as package files.
+echo "Removing stale download directories from cache..."
+sudo find /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec rm -rf {} +
 
-# Vacuum journals
-sudo journalctl --vacuum-size=500M && sudo journalctl --vacuum-time=7d
+# 2. Remove unused package cache
+echo "Cleaning package cache (old versions)..."
+sudo pacman -Sc
 
-# Clean up package caches
-pamac remove --orphans       # Remove orphaned libraries
-pamac clean --build-files -v # Clean pamac build cache
-sudo paccache -rvuk0         # Remove all uninstalled packages
-sudo paccache -rvk3          # Remove old installed packages, leave 3
-# sudo pacman -Sc
-# sudo pacman -Qdt
-# sudo pacman -Rns $(pacman -Qtdq)
+# 3. Remove unused dependencies (orphans)
+echo "Checking for orphaned packages..."
+# pacman exits non-zero when there are no orphans, which set -e would
+# otherwise treat as a fatal error.
+orphans=$(pacman -Qdtq || true)
 
-# Remove ~/.cache files that have not been accessed in the last 100 days
-find ~/.cache -depth -type f -mtime +100 -delete
+if [ -n "$orphans" ]; then
+    echo "Orphaned packages found:"
+    echo "$orphans"
+    read -p "Do you want to remove these orphaned packages? [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        sudo pacman -Rns $orphans
+    else
+        echo "Skipping orphan removal."
+    fi
+else
+    echo "No orphaned packages found."
+fi
 
-# Clean temporary build files
-rm -rf ~/{.bundle,.cargo,.cmake,.dotnet,.electron,.electron-gyp,.gem,.gradle,.lazarus,.node-gyp,.npm,.nuget,.nvm,.racket,.rustup,.stack,.yarn} || true
-rm -rf ~/.cache/{electron,electron-builder,go-build,node-gyp,pip,yarn} || true
-sudo rm -rf ~/go || true
+# 4. Clear package manager lock and temporary files
+echo "Clearing temporary files..."
+sudo pacman -Scc --noconfirm
+
+echo "Cleanup complete!"
